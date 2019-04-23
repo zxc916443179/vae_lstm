@@ -39,5 +39,5 @@ def batch_iter(data, batch_size, shuffle=False):
         shuffled_data = data[start_index: end_index]
         if shuffle:
             shuffle_indices = np.random.permutation(np.arange(end_index - start_index))
-            shuffle_data = shuffle_data[shuffle_indices]
-        yield shuffle_data
+            shuffled_data = shuffled_data[shuffle_indices]
+        yield shuffled_data
