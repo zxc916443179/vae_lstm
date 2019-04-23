@@ -8,7 +8,6 @@ import tensorflow.contrib.rnn as rnn
 from tensorflow.examples.tutorials.mnist import input_data
 from model import Layers, Utils
 import utils
-from vae import xavier_init
 tf.flags.DEFINE_integer('epoch', 10000, "steps")
 tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
@@ -74,9 +73,14 @@ class VAE(object):
             self.loss = tf.reduce_mean(self.recon_loss * self.alpha + self.kl_loss)
     
 if __name__ == '__main__':
-    mnist = input_data.read_data_sets('./MNIST', one_hot=True)
-    train_data = mnist.train.images[0:8]
-    test_data = mnist.train.images[9]
+    mnist = input_data.read_data_sets('./MNIST', one_hot=False)
+    train_data = []
+    test_data = []
+    for i, l in enumerate(mnist.train.labels):
+        if l != 9:
+            train_data.append(mnist.train.images[i])
+        else:
+            test_data.append(mnist.train.images[i])
     # x_train = mnist.train.images
     vae = VAE(input_h=28, input_w=28, k_w=3, k_h=3, alpha=flags.alpha)
     global_step = tf.Variable(0, trainable=False, name='global_step')
