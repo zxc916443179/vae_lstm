@@ -11,6 +11,7 @@ import utils
 from vae import xavier_init
 tf.flags.DEFINE_integer('epoch', 10000, "steps")
 tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
+tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
 flags = tf.flags.FLAGS
 
 if 'Linux' in platform.system():
