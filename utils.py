@@ -26,3 +26,18 @@ def montage(images, saveto='montage.png'):
                   1 + j + j * img_w:1 + j + (j + 1) * img_w] = this_img
     # plt.imsave(arr=m, fname=saveto)
     return m
+def batch_iter(data, batch_size, shuffle=False):
+    '''
+        generate a batch of training data
+    '''
+    data = np.array(data)
+    data_size = len(data)
+    num_batches = int((len(data) - 1) / batch_size + 1)
+    for i in range(num_batches):
+        start_index = i * batch_size
+        end_index = min((i + 1) * batch_size, data_size)
+        shuffled_data = data[start_index: end_index]
+        if shuffle:
+            shuffle_indices = np.random.permutation(np.arange(end_index - start_index))
+            shuffle_data = shuffle_data[shuffle_indices]
+        yield shuffle_data
