@@ -36,7 +36,7 @@ class Layers:
     @staticmethod
     def batch_norm(x, epsilon=1e-5, momentum=0.9, is_training=True):
         return tf.layers.batch_normalization(
-            x, momentum=momentum, epsilon=epsilon, scale=True, is_training=is_training
+            x, momentum=momentum, epsilon=epsilon, scale=True, training=is_training
         )
     @staticmethod
     def forward(inputs, W, b, op=None, stride=None, activation=None):
