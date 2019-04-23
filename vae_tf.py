@@ -9,10 +9,12 @@ from tensorflow.examples.tutorials.mnist import input_data
 from model import Layers, Utils
 import utils
 from vae import xavier_init
-if 'Linux' in platform.system():
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 tf.flags.DEFINE_integer('epoch', 10000, "steps")
+tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 flags = tf.flags.FLAGS
+
+if 'Linux' in platform.system():
+    os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
 class VAE(object):
     def __init__(self, input_h, input_w, k_w, k_h):
         self.input_h = input_h
