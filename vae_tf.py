@@ -54,7 +54,7 @@ class VAE(object):
             hb = Layers.dense(ha_bn, 128, activation=None)
             hb_bn = Layers.batch_norm(hb, is_training=self.training)
 
-            hc = Layers.dense(1, 128, activation=tf.nn.relu)
+            hc = Layers.dense(h1, 128, activation=tf.nn.relu)
             hc_bn = Layers.batch_norm(hc, is_training=self.training)
             
             out = tf.nn.relu(hc_bn + hc_bn)
