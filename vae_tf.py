@@ -12,16 +12,18 @@ from vae import xavier_init
 tf.flags.DEFINE_integer('epoch', 10000, "steps")
 tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
+tf.flags.DEFINE_float('alpha', 0.2, 'alpha between kl_loss and recon_loss')
 flags = tf.flags.FLAGS
 
 if 'Linux' in platform.system():
     os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
 class VAE(object):
-    def __init__(self, input_h, input_w, k_w, k_h):
+    def __init__(self, input_h, input_w, k_w, k_h, alpha=0.2):
         self.input_h = input_h
         self.input_w = input_w
         self.k_h = k_h
         self.k_w = k_w
+        self.alpha = alpha
         self.input_x = tf.placeholder(tf.float32, shape=[None, 784], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
         self.X = self.input_x
@@ -69,16 +71,16 @@ class VAE(object):
             # self.recon_loss = tf.reduce_mean(tf.image.psnr(tf.reshape(self.out, shape=(-1, 28, 28)), tf.reshape(self.input_x, shape=(-1, 28, 28)), max_val=1.0))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
             self.kl_loss = 0.5 * tf.reduce_sum(tf.exp(self.var) + self.mean**2 - 1. - self.var, 1)
-            self.loss = tf.reduce_mean(self.recon_loss + self.kl_loss)
+            self.loss = tf.reduce_mean(self.recon_loss * self.alpha + self.kl_loss)
     
 if __name__ == '__main__':
     mnist = input_data.read_data_sets('./MNIST', one_hot=True)
     train_data = mnist.train.images[0:8]
     test_data = mnist.train.images[9]
     # x_train = mnist.train.images
-    vae = VAE(input_h=28, input_w=28, k_w=3, k_h=3)
+    vae = VAE(input_h=28, input_w=28, k_w=3, k_h=3, alpha=flags.alpha)
     global_step = tf.Variable(0, trainable=False, name='global_step')
-    optimizer = tf.train.AdamOptimizer(0.01)
+    optimizer = tf.train.AdamOptimizer(flags.alpha)
     # optimizer = tf.train.GradientDescentOptimizer(0.001)
     # optimizer = tf.train.MomentumOptimizer(0.01, 0.9)
     with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
