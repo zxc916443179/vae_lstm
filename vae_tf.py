@@ -22,7 +22,6 @@ class VAE(object):
         self.k_h = k_h
         self.k_w = k_w
         self.input_x = tf.placeholder(tf.float32, shape=[None, 784], name="input_x")
-        self.input_y = tf.placeholder(tf.float32, shape=[None, 10], name="label")
         self.training = tf.placeholder(tf.bool, name="training")
         self.X = self.input_x
 
@@ -38,7 +37,7 @@ class VAE(object):
             hc = Layers.dense(self.Q, 128, activation=tf.nn.relu)
             hc_bn = Layers.batch_norm(hc, is_training=self.training)
             
-            out = tf.nn.relu(hc_bn + hc_bn)
+            out = tf.nn.relu(hb_bn + hc_bn)
 
         self.mean = Layers.dense(out, 100, activation=None, name="encoder_mean")
         self.var = Layers.dense(out, 100, activation=None, name="encoder_variance")
@@ -46,6 +45,7 @@ class VAE(object):
         with tf.name_scope('latent_vector'):
             sampled = Utils.sample(self.mean, self.var)
             sampled = tf.concat(values=[sampled, self.h], axis=1)
+
         h1 = Layers.dense(sampled, 128, activation=tf.nn.relu, name="decoder_1")
 
         with tf.name_scope('res_block_1'):
@@ -57,7 +57,7 @@ class VAE(object):
             hc = Layers.dense(h1, 128, activation=tf.nn.relu)
             hc_bn = Layers.batch_norm(hc, is_training=self.training)
             
-            out = tf.nn.relu(hc_bn + hc_bn)
+            out = tf.nn.relu(hb_bn + hc_bn)
 
         self.out = Layers.dense(out, 784, None, name="decoder")
 
@@ -72,6 +72,8 @@ class VAE(object):
     
 if __name__ == '__main__':
     mnist = input_data.read_data_sets('./MNIST', one_hot=True)
+    train_data = mnist.train.images[0:8]
+    test_data = mnist.train.images[9]
     # x_train = mnist.train.images
     vae = VAE(input_h=28, input_w=28, k_w=3, k_h=3)
     global_step = tf.Variable(0, trainable=False, name='global_step')
@@ -87,24 +89,24 @@ if __name__ == '__main__':
     sess = tf.Session(config=session_conf)
     sess.run(tf.initialize_all_variables())
     for i in range(flags.epoch):
-        x, y = mnist.train.next_batch(128)
-        x = np.asarray(x)
-        fetches = [train_op, vae.loss]
-        fetch = sess.run(fetches, feed_dict={
-            vae.input_x: x, vae.input_y: y, vae.training: True
-        })
-        current_step = tf.train.global_step(sess, global_step)
-        if current_step % 50 == 0:
-            print('epoch:%3d \t step:%d \t loss:%5f' % (i, current_step, fetch[1]))
-        if current_step % 100 == 0:
-            loss = sess.run(vae.loss, feed_dict={
-                vae.input_x: mnist.test.images, vae.input_y: mnist.test.labels, vae.training: False
+        for x in utils.batch_iter(train_data, batch_size=128, shuffle=True):
+            x = np.asarray(x)
+            fetches = [train_op, vae.loss]
+            fetch = sess.run(fetches, feed_dict={
+                vae.input_x: x, vae.training: True
             })
-            print("Evaluation:")
-            print("loss:%.5f" % loss)
+            current_step = tf.train.global_step(sess, global_step)
+            if current_step % 50 == 0:
+                print('epoch:%3d \t step:%d \t loss:%5f' % (i, current_step, fetch[1]))
+            if current_step % 100 == 0:
+                loss = sess.run(vae.loss, feed_dict={
+                    vae.input_x: test_data, vae.training: False
+                })
+                print("Evaluation:")
+                print("loss:%.5f" % loss)
 
     recon = sess.run(vae.out, feed_dict={
-        vae.input_x: mnist.test.images, vae.input_y: mnist.test.labels, vae.training: False
+        vae.input_x: test_data, vae.training: False
     })
     recon = recon[0:200]
     print(recon.shape)
