@@ -70,7 +70,7 @@ class VAE(object):
             # self.recon_loss = tf.reduce_mean(tf.image.psnr(tf.reshape(self.out, shape=(-1, 28, 28)), tf.reshape(self.input_x, shape=(-1, 28, 28)), max_val=1.0))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
             self.kl_loss = 0.5 * tf.reduce_sum(tf.exp(self.var) + self.mean**2 - 1. - self.var, 1)
-            self.loss = tf.reduce_mean(self.recon_loss + self.kl_loss)
+            self.loss = tf.reduce_mean(self.recon_loss * self.alpha+ self.kl_loss)
     
 if __name__ == '__main__':
     mnist = input_data.read_data_sets('./MNIST', one_hot=False)
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     # x_train = mnist.train.images
     vae = VAE(input_h=28, input_w=28, k_w=3, k_h=3, alpha=flags.alpha)
     global_step = tf.Variable(0, trainable=False, name='global_step')
-    optimizer = tf.train.AdamOptimizer(flags.alpha)
+    optimizer = tf.train.AdamOptimizer(flags.learning_rate)
     # optimizer = tf.train.GradientDescentOptimizer(0.001)
     # optimizer = tf.train.MomentumOptimizer(0.01, 0.9)
     with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
