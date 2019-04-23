@@ -1,0 +1,7 @@
+MNIST
+out
+*.jpg
+*.txt
+*.model
+__pycache__
+.vscode
