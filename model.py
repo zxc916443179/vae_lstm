@@ -34,6 +34,21 @@ class Layers:
             b = tf.Variable(tf.constant(0.0, shape=[units]), name="b")
             return Layers.forward(inputs, W, b, tf.matmul, None, activation)
     @staticmethod
+    def res_block(inputs, units, name="res_block", is_training=True):
+        with tf.name_scope(name):
+            # branch a
+            ha = Layers.dense(inputs, units, activation=tf.nn.relu)
+            ha_bn = Layers.batch_norm(ha, is_training=is_training)
+            hb = Layers.dense(ha_bn, units, activation=None)
+            hb_bn = Layers.batch_norm(hb, is_training)
+
+            # branch b
+            hc = Layers.dense(inputs, units, activation=tf.nn.relu)
+            hc_bn = Layers.batch_norm(hc, is_training)
+
+            # out
+            return tf.nn.relu(hc_bn + hb_bn)
+    @staticmethod
     def batch_norm(x, epsilon=1e-5, momentum=0.9, is_training=True):
         return tf.layers.batch_normalization(
             x, momentum=momentum, epsilon=epsilon, scale=True, training=is_training
