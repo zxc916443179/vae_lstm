@@ -12,56 +12,57 @@ tf.flags.DEFINE_integer('epoch', 10000, "steps")
 tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
 tf.flags.DEFINE_float('alpha', 0.2, 'alpha between kl_loss and recon_loss')
+tf.flags.DEFINE_integer('batch_size', 128, 'batch size')
 flags = tf.flags.FLAGS
 
 if 'Linux' in platform.system():
     os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
 class VAE(object):
-    def __init__(self, input_h, input_w, k_w, k_h, alpha=0.2):
+    def __init__(self, input_h, input_w, k_w, k_h, batch_size,
+        learning_rate=0.01, alpha=0.2):
         self.input_h = input_h
         self.input_w = input_w
         self.k_h = k_h
         self.k_w = k_w
         self.alpha = alpha
+        self.learning_rate = learning_rate
+        self.batch_size = batch_size
         self.input_x = tf.placeholder(tf.float32, shape=[None, 784], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
         self.X = self.input_x
 
-        self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, 28, 28)), num_units=[20, 10])
-        self.Q = Layers.dense(self.X, 128, activation=tf.nn.relu, name="encoder")
 
-        with tf.name_scope('res_block_0'):
-            ha = Layers.dense(self.Q, 128, activation=tf.nn.relu)
-            ha_bn = Layers.batch_norm(ha, is_training=self.training)
-            hb = Layers.dense(ha_bn, 128, activation=None)
-            hb_bn = Layers.batch_norm(hb, is_training=self.training)
+        self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, 28, 28)), num_units=[50, 20, 10])
 
-            hc = Layers.dense(self.Q, 128, activation=tf.nn.relu)
-            hc_bn = Layers.batch_norm(hc, is_training=self.training)
-            
-            out = tf.nn.relu(hb_bn + hc_bn)
+        h1 = Layers.dense(self.X, 512, activation=tf.nn.relu, name='encoder_0')
+        h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training)
 
-        self.mean = Layers.dense(out, 100, activation=None, name="encoder_mean")
-        self.var = Layers.dense(out, 100, activation=None, name="encoder_variance")
+        h2 = Layers.dense(h1_res, 256, activation=tf.nn.relu, name='encoder_1')
+        h2_res = Layers.res_block(h2, 256, name="res_block_1", is_training=self.training)
+
+        h3 = Layers.dense(h2_res, 128, activation=tf.nn.relu, name="encoder")
+        h3_res = Layers.res_block(h3, 128, name='res_block_2', is_training=self.training)
+
+        self.mean = Layers.dense(h3_res, 100, activation=None, name="encoder_mean")
+        self.mean = Layers.res_block(self.mean, 100, name='res_block_mean', is_training=self.training)
+
+        self.var = Layers.dense(h3_res, 100, activation=None, name="encoder_variance")
+        self.var = Layers.res_block(self.var, 100, name='res_block_var', is_training=self.training)
 
         with tf.name_scope('latent_vector'):
             sampled = Utils.sample(self.mean, self.var)
             sampled = tf.concat(values=[sampled, self.h], axis=1)
 
-        h1 = Layers.dense(sampled, 128, activation=tf.nn.relu, name="decoder_1")
+        o1 = Layers.dense(sampled, 128, activation=tf.nn.relu, name="decoder_0")
+        o1_res = Layers.res_block(o1, 128, name='res_block_3', is_training=self.training)
 
-        with tf.name_scope('res_block_1'):
-            ha = Layers.dense(h1, 128, activation=tf.nn.relu)
-            ha_bn = Layers.batch_norm(ha, is_training=self.training)
-            hb = Layers.dense(ha_bn, 128, activation=None)
-            hb_bn = Layers.batch_norm(hb, is_training=self.training)
+        o2 = Layers.dense(o1_res, 256, activation=tf.nn.relu, name="decoder_1")
+        o2_res = Layers.res_block(o2, 256, name="res_block_4", is_training=self.training)
 
-            hc = Layers.dense(h1, 128, activation=tf.nn.relu)
-            hc_bn = Layers.batch_norm(hc, is_training=self.training)
-            
-            out = tf.nn.relu(hb_bn + hc_bn)
+        o3 = Layers.dense(o2_res, 512, activation=tf.nn.relu, name='decoder_2')
+        o3_res = Layers.res_block(o3, 512, name='res_block_5', is_training=self.training)
 
-        self.out = Layers.dense(out, 784, None, name="decoder")
+        self.out = Layers.dense(o3_res, 784, None, name="decoder")
 
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2)
@@ -70,56 +71,59 @@ class VAE(object):
             # self.recon_loss = tf.reduce_mean(tf.image.psnr(tf.reshape(self.out, shape=(-1, 28, 28)), tf.reshape(self.input_x, shape=(-1, 28, 28)), max_val=1.0))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
             self.kl_loss = 0.5 * tf.reduce_sum(tf.exp(self.var) + self.mean**2 - 1. - self.var, 1)
-            self.loss = tf.reduce_mean(self.recon_loss * self.alpha+ self.kl_loss)
-    
-if __name__ == '__main__':
-    mnist = input_data.read_data_sets('./MNIST', one_hot=False)
-    train_data = []
-    test_data = []
-    for i, l in enumerate(mnist.train.labels):
-        if l != 9:
-            train_data.append(mnist.train.images[i])
-        else:
-            test_data.append(mnist.train.images[i])
-    # x_train = mnist.train.images
-    vae = VAE(input_h=28, input_w=28, k_w=3, k_h=3, alpha=flags.alpha)
-    global_step = tf.Variable(0, trainable=False, name='global_step')
-    optimizer = tf.train.AdamOptimizer(flags.learning_rate)
-    # optimizer = tf.train.GradientDescentOptimizer(0.001)
-    # optimizer = tf.train.MomentumOptimizer(0.01, 0.9)
-    with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
-        train_op = optimizer.minimize(vae.loss, global_step=global_step)
+            self.loss = tf.reduce_mean(self.recon_loss * self.alpha + self.kl_loss)
+    def preprocess_mnist(self):
+        mnist = input_data.read_data_sets('./MNIST', one_hot=False)
+        train_data = []
+        test_data = []
+        for i, l in enumerate(mnist.train.labels):
+            if l != 9:
+                train_data.append(mnist.train.images[i])
+            else:
+                test_data.append(mnist.train.images[i])
+        return train_data, test_data
 
-    session_conf = tf.ConfigProto(
-        allow_soft_placement=True)
-    session_conf.gpu_options.allow_growth = True
-    sess = tf.Session(config=session_conf)
-    sess.run(tf.initialize_all_variables())
-    for i in range(flags.epoch):
-        for x in utils.batch_iter(train_data, batch_size=128, shuffle=True):
-            x = np.asarray(x)
-            fetches = [train_op, vae.loss]
-            fetch = sess.run(fetches, feed_dict={
-                vae.input_x: x, vae.training: True
-            })
-            current_step = tf.train.global_step(sess, global_step)
-            if current_step % 50 == 0:
-                print('epoch:%3d \t step:%d \t loss:%5f' % (i, current_step, fetch[1]))
-            if current_step % 100 == 0:
-                loss = sess.run(vae.loss, feed_dict={
-                    vae.input_x: test_data, vae.training: False
+    def train_mnist(self):
+        train_data, test_data = self.preprocess_mnist()
+        global_step = tf.Variable(0, trainable=False, name='global_step')
+        optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+            train_op = optimizer.minimize(self.loss, global_step=global_step)
+        session_conf = tf.ConfigProto(
+            allow_soft_placement=True)
+        session_conf.gpu_options.allow_growth = True
+        self.sess = tf.Session(config=session_conf)
+        self.sess.run(tf.initialize_all_variables())
+        for i in range(flags.epoch):
+            for x in utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True):
+                x = np.asarray(x)
+                fetches = [train_op, self.loss]
+                fetch = self.sess.run(fetches, feed_dict={
+                    self.input_x: x, self.training: True
                 })
-                print("Evaluation:")
-                print("loss:%.5f" % loss)
-
-    recon = sess.run(vae.out, feed_dict={
-        vae.input_x: test_data, vae.training: False
-    })
-    recon = recon[0:200]
-    print(recon.shape)
-    inputs = mnist.test.images[0:200]
-    # inputs = np.squeeze(inputs, -1)
-    recon = np.reshape(recon, (200, 28, 28))
-    inputs = np.reshape(inputs, (200, 28, 28))
-    scipy.misc.imsave('./generate.jpg', utils.montage(recon))
-    scipy.misc.imsave('./inputs.jpg', utils.montage(inputs))
+                current_step = tf.train.global_step(self.sess, global_step)
+                if current_step % 50 == 0:
+                    print('epoch:%3d \t step:%d \t loss:%5f' % (i, current_step, fetch[1]))
+                if current_step % 100 == 0:
+                    loss = self.sess.run(self.loss, feed_dict={
+                        self.input_x: test_data, self.training: False
+                    })
+                    print("Evaluation:")
+                    print("loss:%.5f" % loss)
+    def test_mnist(self):
+        mnist = input_data.read_data_sets('./MNIST', one_hot=False)
+        test_data = mnist.test.images
+        recon = self.sess.run(self.out, feed_dict={
+            self.input_x: test_data, self.training: False
+        })
+        recon = recon[0:200]
+        inputs = mnist.test.images[0:200]
+        # inputs = np.squeeze(inputs, -1)
+        recon = np.reshape(recon, (200, 28, 28))
+        inputs = np.reshape(inputs, (200, 28, 28))
+        scipy.misc.imsave('./generate.jpg', utils.montage(recon))
+        scipy.misc.imsave('./inputs.jpg', utils.montage(inputs))
+if __name__ == '__main__':
+    vae = VAE(input_h=28, input_w=28, k_w=3, k_h=3, batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha)
+    vae.train_mnist()
+    vae.test_mnist()
