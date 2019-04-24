@@ -40,11 +40,11 @@ class Layers:
             ha = Layers.dense(inputs, units, activation=tf.nn.relu)
             ha_bn = Layers.batch_norm(ha, is_training=is_training)
             hb = Layers.dense(ha_bn, units, activation=None)
-            hb_bn = Layers.batch_norm(hb, is_training)
+            hb_bn = Layers.batch_norm(hb, is_training=is_training)
 
             # branch b
             hc = Layers.dense(inputs, units, activation=tf.nn.relu)
-            hc_bn = Layers.batch_norm(hc, is_training)
+            hc_bn = Layers.batch_norm(hc, is_training=is_training)
 
             # out
             return tf.nn.relu(hc_bn + hb_bn)
