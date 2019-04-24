@@ -70,7 +70,7 @@ class VAE(object):
             self.recon_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.out, labels=self.input_x), 1)
             # self.recon_loss = tf.reduce_mean(tf.image.psnr(tf.reshape(self.out, shape=(-1, 28, 28)), tf.reshape(self.input_x, shape=(-1, 28, 28)), max_val=1.0))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
-            self.kl_loss = 0.5 * tf.reduce_sum(tf.exp(self.var) + self.mean**2 - 1. - self.var, 1)
+            self.kl_loss = 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
             self.recon_loss = tf.reduce_mean(self.recon_loss)
             self.kl_loss = tf.reduce_mean(self.kl_loss)
             self.loss = self.recon_loss * self.alpha + self.kl_loss
