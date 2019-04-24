@@ -32,22 +32,22 @@ class VAE(object):
         self.X = self.input_x
 
 
-        self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, 28, 28)), num_units=[50, 20, 10])
+        self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, 28, 28)), num_units=[512, 256, 128, 10])
 
         h1 = Layers.dense(self.X, 512, activation=tf.nn.relu, name='encoder_0')
-        h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training)
+        h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
 
         h2 = Layers.dense(h1_res, 256, activation=tf.nn.relu, name='encoder_1')
-        h2_res = Layers.res_block(h2, 256, name="res_block_1", is_training=self.training)
+        h2_res = Layers.res_block(h2, 256, name="res_block_1", is_training=self.training, activation=tf.nn.relu)
 
         h3 = Layers.dense(h2_res, 128, activation=tf.nn.relu, name="encoder")
-        h3_res = Layers.res_block(h3, 128, name='res_block_2', is_training=self.training)
+        h3_res = Layers.res_block(h3, 128, name='res_block_2', is_training=self.training, activation=tf.nn.relu)
 
         self.mean = Layers.dense(h3_res, 100, activation=None, name="encoder_mean")
-        self.mean = Layers.res_block(self.mean, 100, name='res_block_mean', is_training=self.training)
+        self.mean = Layers.res_block(self.mean, 100, name='res_block_mean', is_training=self.training, activation=tf.nn.sigmoid)
 
         self.var = Layers.dense(h3_res, 100, activation=None, name="encoder_variance")
-        self.var = Layers.res_block(self.var, 100, name='res_block_var', is_training=self.training)
+        self.var = Layers.res_block(self.var, 100, name='res_block_var', is_training=self.training, activation=tf.nn.sigmoid)
 
         with tf.name_scope('latent_vector'):
             sampled = Utils.sample(self.mean, self.var)
@@ -73,7 +73,7 @@ class VAE(object):
             self.kl_loss = 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
             self.recon_loss = tf.reduce_mean(self.recon_loss)
             self.kl_loss = tf.reduce_mean(self.kl_loss)
-            self.loss = self.recon_loss * self.alpha + self.kl_loss
+            self.loss = self.recon_loss * self.alpha - self.kl_loss
     def preprocess_mnist(self):
         mnist = input_data.read_data_sets('./MNIST', one_hot=False)
         train_data = []
@@ -97,15 +97,21 @@ class VAE(object):
         self.sess = tf.Session(config=session_conf)
         self.sess.run(tf.initialize_all_variables())
         for i in range(flags.epoch):
+            recon_sum = 0
+            kl_sum = 0
             for x in utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True):
                 x = np.asarray(x)
                 fetches = [train_op, self.recon_loss, self.kl_loss]
                 fetch = self.sess.run(fetches, feed_dict={
                     self.input_x: x, self.training: True
                 })
+                recon_sum += fetch[1]
+                kl_sum += fetch[2]
                 current_step = tf.train.global_step(self.sess, global_step)
                 if current_step % 50 == 0:
-                    print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, fetch[1], fetch[2]))
+                    print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, recon_sum / 50, - kl_sum / 50))
+                    recon_sum = 0
+                    kl_sum = 0
                 if current_step % 100 == 0:
                     loss, kl_loss = self.sess.run([self.recon_loss, self.kl_loss], feed_dict={
                         self.input_x: test_data, self.training: False
