@@ -71,7 +71,9 @@ class VAE(object):
             # self.recon_loss = tf.reduce_mean(tf.image.psnr(tf.reshape(self.out, shape=(-1, 28, 28)), tf.reshape(self.input_x, shape=(-1, 28, 28)), max_val=1.0))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
             self.kl_loss = 0.5 * tf.reduce_sum(tf.exp(self.var) + self.mean**2 - 1. - self.var, 1)
-            self.loss = tf.reduce_mean(self.recon_loss * self.alpha + self.kl_loss)
+            self.recon_loss = tf.reduce_mean(self.recon_loss)
+            self.kl_loss = tf.reduce_mean(self.kl_loss)
+            self.loss = self.recon_loss * self.alpha + self.kl_loss
     def preprocess_mnist(self):
         mnist = input_data.read_data_sets('./MNIST', one_hot=False)
         train_data = []
@@ -97,13 +99,13 @@ class VAE(object):
         for i in range(flags.epoch):
             for x in utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True):
                 x = np.asarray(x)
-                fetches = [train_op, self.loss]
+                fetches = [train_op, self.recon_loss, self.kl_loss]
                 fetch = self.sess.run(fetches, feed_dict={
                     self.input_x: x, self.training: True
                 })
                 current_step = tf.train.global_step(self.sess, global_step)
                 if current_step % 50 == 0:
-                    print('epoch:%3d \t step:%d \t loss:%5f' % (i, current_step, fetch[1]))
+                    print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, fetch[1], fetch[2]))
                 if current_step % 100 == 0:
                     loss = self.sess.run(self.loss, feed_dict={
                         self.input_x: test_data, self.training: False
