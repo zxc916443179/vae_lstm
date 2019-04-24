@@ -107,7 +107,7 @@ class VAE(object):
                 if current_step % 50 == 0:
                     print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, fetch[1], fetch[2]))
                 if current_step % 100 == 0:
-                    loss = self.sess.run(self.loss, feed_dict={
+                    loss = self.sess.run(self.recon_loss, feed_dict={
                         self.input_x: test_data, self.training: False
                     })
                     print("Evaluation:")
