@@ -107,11 +107,11 @@ class VAE(object):
                 if current_step % 50 == 0:
                     print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, fetch[1], fetch[2]))
                 if current_step % 100 == 0:
-                    loss = self.sess.run(self.recon_loss, feed_dict={
+                    loss, kl_loss = self.sess.run([self.recon_loss, self.kl_loss], feed_dict={
                         self.input_x: test_data, self.training: False
                     })
                     print("Evaluation:")
-                    print("loss:%.5f" % loss)
+                    print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
     def test_mnist(self):
         mnist = input_data.read_data_sets('./MNIST', one_hot=False)
         test_data = mnist.test.images
