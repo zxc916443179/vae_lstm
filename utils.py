@@ -52,10 +52,11 @@ def read_data_UCSD(path, shuffle=False, training=True):
             for img_dir in os.listdir(os.path.join(path, 'train', d, 'box_img')):
                 img = cv2.imread(os.path.join(path, 'train', d, 'box_img', img_dir))
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                print(img)
-                img = np.reshape(img, (45 * 45, 1))
+                img_flat = img.flatten()
+                img_flat = cv2.normalize(img_flat.astype(float), img_flat.astype(float), alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
+                print(img_flat)
                 input()
-                data.append(img)
+                data.append(img_flat)
     else:
         test_dirs = os.listdir(os.path.join(path, 'test'))
         for test_dir in test_dirs:
