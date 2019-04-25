@@ -88,7 +88,8 @@ class VAE(object):
     def train_mnist(self):
         train_data, test_data = self.preprocess_mnist()
         global_step = tf.Variable(0, trainable=False, name='global_step')
-        optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        # optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
             train_op = optimizer.minimize(self.loss, global_step=global_step)
         session_conf = tf.ConfigProto(
