@@ -13,29 +13,30 @@ tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
 tf.flags.DEFINE_float('alpha', 0.2, 'alpha between kl_loss and recon_loss')
 tf.flags.DEFINE_integer('batch_size', 128, 'batch size')
+tf.flags.DEFINE_integer('input_size', 28, 'size of images(default:28*28)')
+tf.flags.DEFINE_string('dataset_path', None, 'path to dataset')
 flags = tf.flags.FLAGS
 
 if 'Linux' in platform.system():
     os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
 class VAE(object):
-    def __init__(self, input_h, input_w, k_w, k_h, batch_size,
-        learning_rate=0.01, alpha=0.2):
+    def __init__(self, input_h, input_w, batch_size,
+        learning_rate=0.01, alpha=0.2, dataset_path=None):
         self.input_h = input_h
         self.input_w = input_w
-        self.k_h = k_h
-        self.k_w = k_w
         self.alpha = alpha
         self.learning_rate = learning_rate
         self.batch_size = batch_size
+        self.dataset_path = dataset_path
+
         self.input_x = tf.placeholder(tf.float32, shape=[None, self.input_h * self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
-        self.X = self.input_x
 
 
         self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, self.input_w, self.input_h)), num_units=[512, 256, 128, 10])
 
         
-        h0 = Layers.dense(self.X, 1024, activation=tf.nn.relu, name='encoder_0')
+        h0 = Layers.dense(self.input_x, 1024, activation=tf.nn.relu, name='encoder_0')
         h0_res = Layers.res_block(h0, 1024, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
 
         h1 = Layers.dense(h0_res, 512, activation=tf.nn.relu, name='encoder_1')
@@ -80,6 +81,7 @@ class VAE(object):
             self.recon_loss = tf.reduce_mean(self.recon_loss)
             self.kl_loss = tf.reduce_mean(self.kl_loss)
             self.loss = self.recon_loss * self.alpha - self.kl_loss
+
     def preprocess_mnist(self):
         mnist = input_data.read_data_sets('./MNIST', one_hot=False)
         train_data = []
@@ -91,8 +93,12 @@ class VAE(object):
                 test_data.append(mnist.train.images[i])
         return train_data, test_data
 
-    def train_mnist(self):
-        train_data, test_data = self.preprocess_mnist()
+    def train(self):
+        # train_data, test_data = self.preprocess_mnist()
+        train_data = utils.read_data_UCSD('UCSDped_patch/ped1', shuffle=True)
+        # split train / validation
+        validate_data = train_data[-1000:]
+        train_data = train_data[:-1000]
         global_step = tf.Variable(0, trainable=False, name='global_step')
         optimizer = tf.train.AdamOptimizer(self.learning_rate)
         # optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
@@ -119,12 +125,13 @@ class VAE(object):
                     print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, recon_sum / 50, - kl_sum / 50))
                     recon_sum = 0
                     kl_sum = 0
-                if current_step % 100 == 0:
+                if current_step % 1000 == 0:
                     loss, kl_loss = self.sess.run([self.recon_loss, self.kl_loss], feed_dict={
-                        self.input_x: test_data, self.training: False
+                        self.input_x: validate_data, self.training: False
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
+
     def test_mnist(self):
         mnist = input_data.read_data_sets('./MNIST', one_hot=False)
         test_data = mnist.test.images
@@ -139,6 +146,8 @@ class VAE(object):
         scipy.misc.imsave('./generate.jpg', utils.montage(recon))
         scipy.misc.imsave('./inputs.jpg', utils.montage(inputs))
 if __name__ == '__main__':
-    vae = VAE(input_h=28, input_w=28, k_w=3, k_h=3, batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha)
-    vae.train_mnist()
-    vae.test_mnist()
+    vae = VAE(
+        input_h=flags.input_size, input_w=flags.input_size, 
+        batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path)
+    vae.train()
+    # vae.test_mnist()
