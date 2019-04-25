@@ -43,6 +43,7 @@ def batch_iter(data, batch_size, shuffle=False):
         shuffled_data = data[start_index: end_index]
         if shuffle:
             shuffled_data = utils.shuffle(shuffled_data)
+        print('load success')
         yield shuffled_data
 
 def read_data_UCSD(path, shuffle=False, training=True):
