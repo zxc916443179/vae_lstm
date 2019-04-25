@@ -36,14 +36,12 @@ def batch_iter(data, batch_size, shuffle=False):
     data = np.array(data)
     data_size = len(data)
     num_batches = int((len(data) - 1) / batch_size + 1)
-    print('loading batches')
     for i in range(num_batches):
         start_index = i * batch_size
         end_index = min((i + 1) * batch_size, data_size)
         shuffled_data = data[start_index: end_index]
         if shuffle:
             shuffled_data = utils.shuffle(shuffled_data)
-        print('load success')
         yield shuffled_data
 
 def read_data_UCSD(path, shuffle=False, training=True):

@@ -121,7 +121,7 @@ class VAE(object):
                 recon_sum += fetch[1]
                 kl_sum += fetch[2]
                 current_step = tf.train.global_step(self.sess, global_step)
-                if current_step % 50 == 0:
+                if current_step % 1 == 0:
                     print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, recon_sum / 50, - kl_sum / 50))
                     recon_sum = 0
                     kl_sum = 0
