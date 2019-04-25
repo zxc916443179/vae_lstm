@@ -51,14 +51,14 @@ def read_data_UCSD(path, shuffle=False, training=True):
         for d in dirs:
             for img_dir in os.listdir(os.path.join(path, 'train', d, 'box_img')):
                 img = cv2.imread(img_dir)
-                img = np.reshape(img, (-1, 1))
+                img = np.reshape(img, (45 * 45, 1))
                 data.append(img)
     else:
         test_dirs = os.listdir(os.path.join(path, 'test'))
         for test_dir in test_dirs:
             for img_dir in os.listdir(os.path.join(path, 'test', test_dir, 'box_img')):
                 img = cv2.imread(img_dir)
-                img = np.reshape(img, (-1, 1))
+                img = np.reshape(img, (45 * 45, 1))
                 data.append(img)
     print('total load data:%d' % len(data))
     print(np.shape(data))
