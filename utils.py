@@ -61,6 +61,7 @@ def read_data_UCSD(path, shuffle=False, training=True):
                 img = np.reshape(img, (-1, 1))
                 data.append(img)
     print('total load data:%d' % len(data))
+    print(np.shape(data))
     if shuffle:
         data = utils.shuffle(data)
     return data
