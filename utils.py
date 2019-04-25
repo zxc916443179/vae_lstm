@@ -51,7 +51,8 @@ def read_data_UCSD(path, shuffle=False, training=True):
         for d in dirs:
             for img_dir in os.listdir(os.path.join(path, 'train', d, 'box_img')):
                 img = cv2.imread(os.path.join(path, 'train', d, 'box_img', img_dir))
-                print(len(img))
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                print(img)
                 img = np.reshape(img, (45 * 45, 1))
                 input()
                 data.append(img)
