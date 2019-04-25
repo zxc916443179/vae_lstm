@@ -1,4 +1,6 @@
 import numpy as np
+import os
+import cv2
 def montage(images, saveto='montage.png'):
     """
 	Draw all images as a montage separated by 1 pixel borders.
@@ -41,3 +43,21 @@ def batch_iter(data, batch_size, shuffle=False):
             shuffle_indices = np.random.permutation(np.arange(end_index - start_index))
             shuffled_data = shuffled_data[shuffle_indices]
         yield shuffled_data
+
+def read_data_UCSD(path):
+    train_data = []
+    test_data = []
+    train_dirs = os.listdir(os.path.join(path, 'train'))
+    for train_dir in train_dirs:
+        for img_dir in os.listdir(os.path.join(path, 'train', train_dir)):
+            img = cv2.imread(img_dir)
+            train_data.append(img)
+
+    test_dirs = os.listdir(os.path.join(path, 'test'))
+    for test_dir in test_dirs:
+        for img_dir in os.listdir(os.path.join(path, 'test', test_dir)):
+            img = cv2.imread(img_dir)
+            test_data.append(img)
+    print('train data length:%d' % len(train_data))
+    print('test data length:%d' % len(test_data))
+    return train_data, test_data
