@@ -8,7 +8,7 @@ import tensorflow.contrib.rnn as rnn
 from tensorflow.examples.tutorials.mnist import input_data
 from model import Layers, Utils
 import utils
-tf.flags.DEFINE_integer('epoch', 10000, "steps")
+tf.flags.DEFINE_integer('epoch', 10000, "training epoches")
 tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
 tf.flags.DEFINE_float('alpha', 0.2, 'alpha between kl_loss and recon_loss')
@@ -27,17 +27,21 @@ class VAE(object):
         self.alpha = alpha
         self.learning_rate = learning_rate
         self.batch_size = batch_size
-        self.input_x = tf.placeholder(tf.float32, shape=[None, 784], name="input_x")
+        self.input_x = tf.placeholder(tf.float32, shape=[None, self.input_h * self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
         self.X = self.input_x
 
 
-        self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, 28, 28)), num_units=[512, 256, 128, 10])
+        self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, self.input_w, self.input_h)), num_units=[512, 256, 128, 10])
 
-        h1 = Layers.dense(self.X, 512, activation=tf.nn.relu, name='encoder_0')
+        
+        h0 = Layers.dense(self.X, 1024, activation=tf.nn.relu, name='encoder_0')
+        h0_res = Layers.res_block(h0, 1024, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
+
+        h1 = Layers.dense(h0_res, 512, activation=tf.nn.relu, name='encoder_1')
         h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
 
-        h2 = Layers.dense(h1_res, 256, activation=tf.nn.relu, name='encoder_1')
+        h2 = Layers.dense(h1_res, 256, activation=tf.nn.relu, name='encoder_2')
         h2_res = Layers.res_block(h2, 256, name="res_block_1", is_training=self.training, activation=tf.nn.relu)
 
         h3 = Layers.dense(h2_res, 128, activation=tf.nn.relu, name="encoder")
@@ -62,7 +66,9 @@ class VAE(object):
         o3 = Layers.dense(o2_res, 512, activation=tf.nn.relu, name='decoder_2')
         o3_res = Layers.res_block(o3, 512, name='res_block_5', is_training=self.training)
 
-        self.out = Layers.dense(o3_res, 784, None, name="decoder")
+        o4 = Layers.dense(o3_res, 1024, activation=tf.nn.relu, name='decoder_3')
+        o4_res = Layers.res_block(o4, 1024, name='res_block_5', is_training=self.training)
+        self.out = Layers.dense(o4_res, 784, None, name="decoder")
 
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2)
