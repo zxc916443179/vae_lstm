@@ -13,8 +13,8 @@ tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
 tf.flags.DEFINE_float('alpha', 0.2, 'alpha between kl_loss and recon_loss')
 tf.flags.DEFINE_integer('batch_size', 128, 'batch size')
-tf.flags.DEFINE_integer('input_size', 28, 'size of images(default:28*28)')
-tf.flags.DEFINE_string('dataset_path', None, 'path to dataset')
+tf.flags.DEFINE_integer('input_size', 45, 'size of images(default:28*28)')
+tf.flags.DEFINE_string('dataset_path', './UCSDped_patch/ped1', 'path to dataset')
 flags = tf.flags.FLAGS
 
 if 'Linux' in platform.system():
@@ -36,8 +36,8 @@ class VAE(object):
         self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, self.input_w, self.input_h)), num_units=[512, 256, 128, 10])
 
         
-        h0 = Layers.dense(self.input_x, 1024, activation=tf.nn.relu, name='encoder_0')
-        h0_res = Layers.res_block(h0, 1024, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
+        h0 = Layers.dense(self.input_x, 512, activation=tf.nn.relu, name='encoder_0')
+        h0_res = Layers.res_block(h0, 512, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
 
         h1 = Layers.dense(h0_res, 512, activation=tf.nn.relu, name='encoder_1')
         h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
@@ -81,6 +81,7 @@ class VAE(object):
             self.recon_loss = tf.reduce_mean(self.recon_loss)
             self.kl_loss = tf.reduce_mean(self.kl_loss)
             self.loss = self.recon_loss * self.alpha - self.kl_loss
+            self.loss = tf.tuple([self.loss], control_inputs=tf.get_collection(tf.GraphKeys.UPDATE_OPS))[0]
 
     def preprocess_mnist(self):
         mnist = input_data.read_data_sets('./MNIST', one_hot=False)
@@ -100,21 +101,25 @@ class VAE(object):
         validate_data = train_data[-1000:]
         train_data = train_data[:-1000]
         global_step = tf.Variable(0, trainable=False, name='global_step')
-        optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        # optimizer = tf.train.AdamOptimizer(self.learning_rate)
         # optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
-        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
-            train_op = optimizer.minimize(self.loss, global_step=global_step)
+        train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss, global_step)
         session_conf = tf.ConfigProto(
             allow_soft_placement=True)
         session_conf.gpu_options.allow_growth = True
         self.sess = tf.Session(config=session_conf)
         self.sess.run(tf.initialize_all_variables())
+        coord = tf.train.Coordinator()
+        thread = tf.train.start_queue_runners(self.sess, coord)
         for i in range(flags.epoch):
             recon_sum = 0
             kl_sum = 0
-            for x in utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True):
+            with tf.device('/cpu:0'):
+                batcher = utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True)
+            for x in batcher:
                 x = np.asarray(x)
                 fetches = [train_op, self.recon_loss, self.kl_loss]
+                print('running')
                 fetch = self.sess.run(fetches, feed_dict={
                     self.input_x: x, self.training: True
                 })
