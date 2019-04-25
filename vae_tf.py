@@ -69,7 +69,7 @@ class VAE(object):
 
         o4 = Layers.dense(o3_res, 1024, activation=tf.nn.relu, name='decoder_3')
         o4_res = Layers.res_block(o4, 1024, name='res_block_5', is_training=self.training)
-        self.out = Layers.dense(o4_res, 784, None, name="decoder")
+        self.out = Layers.dense(o4_res, self.input_w * self.input_h, None, name="decoder")
 
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2)
