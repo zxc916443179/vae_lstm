@@ -50,6 +50,7 @@ def read_data_UCSD(path, shuffle=False, training=True):
         dirs = os.listdir(os.path.join(path, 'train'))
         for d in dirs:
             for img_dir in os.listdir(os.path.join(path, 'train', d, 'box_img')):
+                print(img_dir)
                 img = cv2.imread(img_dir)
                 img = np.reshape(img, (45 * 45, 1))
                 print(img.shape())
