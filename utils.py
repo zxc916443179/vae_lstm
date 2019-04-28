@@ -78,11 +78,11 @@ def generate_lstm_input(inputs, input_size=45, batch_size=128, time_steps=10, st
     t = inputs
     for i in range(stride):
         t = tf.concat([t, inputs], axis=0)
-    print(len(t))
+    print("t:{}".format(tf.shape(t)))
     l = [t[0: 10]]
     for i in range(batch_size - 1):
         start_index =  (i + 1) * stride
         end_index = start_index + 10
         l.append(t[start_index: end_index])
-    print(tf.shape(l))
+    print("l:{}".format(tf.shape(l)))
     return l
