@@ -3,7 +3,7 @@ import os
 import cv2
 from sklearn import utils
 import tensorflow as tf
-from copy import deepcopy
+# from copy import deepcopy
 def montage(images, saveto='montage.png'):
     """
 	Draw all images as a montage separated by 1 pixel borders.
@@ -75,7 +75,7 @@ def read_data_UCSD(path, shuffle=False, training=True):
 def generate_lstm_input(inputs, input_size=45, batch_size=128, time_steps=10, stride=2):
     if len(inputs.get_shape()) != 2:
         tf.reshape(inputs, (-1, input_size * input_size))
-    t = deepcopy(inputs)
+    t = inputs
     for i in range(stride):
         t = tf.concat([t, inputs], axis=0)
     print(len(t))
