@@ -33,20 +33,20 @@ class VAE(object):
         self.training = tf.placeholder(tf.bool, name="training")
 
 
-        self.h, _ = Layers.RNN.LSTM(tf.reshape(self.input_x, shape=(-1, self.input_w, self.input_h)), num_units=[512, 256, 128, 10])
+        self.h, _ = Layers.RNN.LSTM(utils.generate_lstm_input(self.input_x), num_units=[512, 256, 128, 10])
 
         
-        h0 = Layers.dense(self.input_x, 512, activation=tf.nn.relu, name='encoder_0')
-        h0_res = Layers.res_block(h0, 512, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
+        h0 = Layers.dense(self.input_x, 512, activation=tf.nn.leaky_relu, name='encoder_0')
+        h0_res = Layers.res_block(h0, 512, name='res_block_0', is_training=self.training, activation=tf.nn.leaky_relu)
 
-        h1 = Layers.dense(h0_res, 512, activation=tf.nn.relu, name='encoder_1')
-        h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training, activation=tf.nn.relu)
+        h1 = Layers.dense(h0_res, 512, activation=tf.nn.leaky_relu, name='encoder_1')
+        h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training, activation=tf.nn.leaky_relu)
 
-        h2 = Layers.dense(h1_res, 256, activation=tf.nn.relu, name='encoder_2')
-        h2_res = Layers.res_block(h2, 256, name="res_block_1", is_training=self.training, activation=tf.nn.relu)
+        h2 = Layers.dense(h1_res, 256, activation=tf.nn.leaky_relu, name='encoder_2')
+        h2_res = Layers.res_block(h2, 256, name="res_block_1", is_training=self.training, activation=tf.nn.leaky_relu)
 
-        h3 = Layers.dense(h2_res, 128, activation=tf.nn.relu, name="encoder")
-        h3_res = Layers.res_block(h3, 128, name='res_block_2', is_training=self.training, activation=tf.nn.relu)
+        h3 = Layers.dense(h2_res, 128, activation=tf.nn.leaky_relu, name="encoder")
+        h3_res = Layers.res_block(h3, 128, name='res_block_2', is_training=self.training, activation=tf.nn.leaky_relu)
 
         self.mean = Layers.dense(h3_res, 100, activation=None, name="encoder_mean")
         self.mean = Layers.res_block(self.mean, 100, name='res_block_mean', is_training=self.training, activation=tf.nn.sigmoid)
@@ -58,16 +58,16 @@ class VAE(object):
             sampled = Utils.sample(self.mean, self.var)
             sampled = tf.concat(values=[sampled, self.h], axis=1)
 
-        o1 = Layers.dense(sampled, 128, activation=tf.nn.relu, name="decoder_0")
+        o1 = Layers.dense(sampled, 128, activation=tf.nn.leaky_relu, name="decoder_0")
         o1_res = Layers.res_block(o1, 128, name='res_block_3', is_training=self.training)
 
-        o2 = Layers.dense(o1_res, 256, activation=tf.nn.relu, name="decoder_1")
+        o2 = Layers.dense(o1_res, 256, activation=tf.nn.leaky_relu, name="decoder_1")
         o2_res = Layers.res_block(o2, 256, name="res_block_4", is_training=self.training)
 
-        o3 = Layers.dense(o2_res, 512, activation=tf.nn.relu, name='decoder_2')
+        o3 = Layers.dense(o2_res, 512, activation=tf.nn.leaky_relu, name='decoder_2')
         o3_res = Layers.res_block(o3, 512, name='res_block_5', is_training=self.training)
 
-        o4 = Layers.dense(o3_res, 1024, activation=tf.nn.relu, name='decoder_3')
+        o4 = Layers.dense(o3_res, 1024, activation=tf.nn.leaky_relu, name='decoder_3')
         o4_res = Layers.res_block(o4, 1024, name='res_block_5', is_training=self.training)
 
         self.out = Layers.dense(o4_res, self.input_w * self.input_h, tf.nn.sigmoid, name="decoder")
