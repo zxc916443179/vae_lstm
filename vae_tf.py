@@ -69,6 +69,7 @@ class VAE(object):
 
         o4 = Layers.dense(o3_res, 1024, activation=tf.nn.relu, name='decoder_3')
         o4_res = Layers.res_block(o4, 1024, name='res_block_5', is_training=self.training)
+
         self.out = Layers.dense(o4_res, self.input_w * self.input_h, None, name="decoder")
 
         with tf.name_scope('score'):
@@ -100,6 +101,7 @@ class VAE(object):
         # split train / validation
         validate_data = train_data[-1000:]
         train_data = train_data[:-1000]
+        print(len(validate_data))
         global_step = tf.Variable(0, trainable=False, name='global_step')
         # optimizer = tf.train.AdamOptimizer(self.learning_rate)
         # optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
@@ -135,23 +137,22 @@ class VAE(object):
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
-
-    def test_mnist(self):
-        mnist = input_data.read_data_sets('./MNIST', one_hot=False)
-        test_data = mnist.test.images
+            self.test(test_data=validate_data, img_size=self.input_h, num_show=200)
+            
+    def test(self, test_data, img_size, num_show):
         recon = self.sess.run(self.out, feed_dict={
             self.input_x: test_data, self.training: False
         })
-        recon = recon[0:200]
-        inputs = mnist.test.images[0:200]
+        recon = recon[0:num_show]
+        inputs = test_data[0:num_show]
         # inputs = np.squeeze(inputs, -1)
-        recon = np.reshape(recon, (200, 28, 28))
-        inputs = np.reshape(inputs, (200, 28, 28))
+        recon = np.reshape(recon, (num_show, img_size, img_size))
+        inputs = np.reshape(inputs, (num_show, img_size, img_size))
         scipy.misc.imsave('./generate.jpg', utils.montage(recon))
         scipy.misc.imsave('./inputs.jpg', utils.montage(inputs))
+
 if __name__ == '__main__':
     vae = VAE(
         input_h=flags.input_size, input_w=flags.input_size, 
         batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path)
     vae.train()
-    # vae.test_mnist()
