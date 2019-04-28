@@ -42,6 +42,8 @@ def batch_iter(data, batch_size, shuffle=False):
         start_index = i * batch_size
         end_index = min((i + 1) * batch_size, data_size)
         shuffled_data = data[start_index: end_index]
+        if len(shuffled_data) < batch_size:
+            continue
         if shuffle:
             shuffled_data = utils.shuffle(shuffled_data)
         yield shuffled_data
@@ -76,13 +78,15 @@ def generate_lstm_input(inputs, input_size=45, batch_size=128, time_steps=10, st
     if len(inputs.get_shape()) != 2:
         tf.reshape(inputs, (-1, input_size * input_size))
     t = inputs
+    print("inputs:{}".format(inputs.get_shape()))
     for i in range(stride):
         t = tf.concat([t, inputs], axis=0)
-    print("t:{}".format(tf.shape(t)))
+    print("t:{}".format(t.get_shape()))
     l = [t[0: 10]]
     for i in range(batch_size - 1):
         start_index =  (i + 1) * stride
         end_index = start_index + 10
         l.append(t[start_index: end_index])
-    print("l:{}".format(tf.shape(l)))
+    l = tf.convert_to_tensor(l)
+    print("l:{}".format(l.get_shape()))
     return l
