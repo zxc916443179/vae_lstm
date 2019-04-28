@@ -29,7 +29,7 @@ class VAE(object):
         self.batch_size = batch_size
         self.dataset_path = dataset_path
 
-        self.input_x = tf.placeholder(tf.float32, shape=[None, self.input_h * self.input_w], name="input_x")
+        self.input_x = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h * self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
 
 
