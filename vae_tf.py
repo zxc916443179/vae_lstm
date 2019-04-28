@@ -70,7 +70,7 @@ class VAE(object):
         o4 = Layers.dense(o3_res, 1024, activation=tf.nn.relu, name='decoder_3')
         o4_res = Layers.res_block(o4, 1024, name='res_block_5', is_training=self.training)
 
-        self.out = Layers.dense(o4_res, self.input_w * self.input_h, None, name="decoder")
+        self.out = Layers.dense(o4_res, self.input_w * self.input_h, None, name="decoder", activation=tf.nn.sigmoid)
 
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2)
@@ -138,7 +138,7 @@ class VAE(object):
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
             self.test(test_data=validate_data, img_size=self.input_h, num_show=200)
-            
+
     def test(self, test_data, img_size, num_show):
         recon = self.sess.run(self.out, feed_dict={
             self.input_x: test_data, self.training: False
