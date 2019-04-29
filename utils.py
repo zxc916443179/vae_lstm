@@ -98,6 +98,5 @@ def psnr(im_true, im_test, max_val=1.0):
     ref_data = np.array(im_test)
  
     diff = ref_data - target_data
-    diff = diff.flatten('C')
     rmse = math.sqrt( np.mean(diff ** 2.) )
     return 20*math.log10(max_val/rmse)
