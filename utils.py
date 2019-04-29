@@ -3,7 +3,7 @@ import os
 import cv2
 from sklearn import utils
 import tensorflow as tf
-import skimage
+import math
 # from copy import deepcopy
 def montage(images, saveto='montage.png'):
     """
@@ -72,7 +72,6 @@ def read_data_UCSD(path, shuffle=False, training=True, reshape=True):
                 img = cv2.normalize(img.astype(float), img.astype(float), alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
                 data.append(img)
     print('total load data:%d' % len(data))
-    print(np.shape(data))
     if shuffle:
         data = utils.shuffle(data)
     return data
@@ -93,5 +92,12 @@ def generate_lstm_input(inputs, input_size=45, batch_size=128, time_steps=10, st
     print("l:{}".format(l.get_shape()))
     return l
 
-def psnr(im_true, im_test):
-    return skimage.measure.compare_psnr(im_true, im_test)
+def psnr(im_true, im_test, max_val=1.0):
+    target_data = np.array(im_true)
+    
+    ref_data = np.array(im_test)
+ 
+    diff = ref_data - target_data
+    diff = diff.flatten('C')
+    rmse = math.sqrt( np.mean(diff ** 2.) )
+    return 20*math.log10(max_val/rmse)

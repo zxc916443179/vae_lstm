@@ -100,7 +100,6 @@ class VAE(object):
         # split train / validation
         validate_data = train_data[-128:]
         train_data = train_data[:-128]
-        print(len(validate_data))
         global_step = tf.Variable(0, trainable=False, name='global_step')
         # optimizer = tf.train.AdamOptimizer(self.learning_rate)
         # optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
