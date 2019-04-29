@@ -98,6 +98,6 @@ def psnr(im_true, im_test, max_val=1.0):
     ref_data = np.array(im_test)
  
     diff = ref_data - target_data
-    diff = tf.reshape(diff, (-1,))
+    diff = tf.reshape(diff, (128, -1))
     rmse = tf.sqrt( diff ** 2. )
     return 20 * (tf.log(max_val/rmse) / tf.log(10.0))
