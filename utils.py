@@ -3,6 +3,7 @@ import os
 import cv2
 from sklearn import utils
 import tensorflow as tf
+import skimage
 # from copy import deepcopy
 def montage(images, saveto='montage.png'):
     """
@@ -91,3 +92,6 @@ def generate_lstm_input(inputs, input_size=45, batch_size=128, time_steps=10, st
     l = tf.convert_to_tensor(l)
     print("l:{}".format(l.get_shape()))
     return l
+
+def psnr(im_true, im_test):
+    return skimage.measure.compare_psnr(im_true, im_test)

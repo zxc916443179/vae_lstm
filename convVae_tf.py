@@ -76,14 +76,13 @@ class VAE(object):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2, (1, 2, 3))
             # self.recon_loss = -tf.reduce_sum(self.input_x * tf.log(1e-8 + self.out) + (1 - self.input_x) * tf.log(1e-8 + 1 - self.out))
             # self.recon_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.out, labels=self.input_x), (1, 2, 3))
-            self.recon_loss = tf.reduce_sum(tf.image.psnr(tf.reshape(self.out, shape=(-1, 28, 28)), tf.reshape(self.input_x, shape=(-1, 28, 28)), max_val=1.0), (1, 2, 3))
+            self.recon_loss = tf.reduce_sum(utils.psnr(tf.reshape(self.input_x, shape=(-1, 28, 28)), tf.reshape(self.out, shape=(-1, 28, 28))), (1, 2, 3))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
             self.kl_loss = 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
             self.recon_loss = tf.reduce_mean(self.recon_loss)
             self.kl_loss = tf.reduce_mean(self.kl_loss)
             self.loss = self.recon_loss * self.alpha - self.kl_loss
             self.loss = tf.tuple([self.loss], control_inputs=tf.get_collection(tf.GraphKeys.UPDATE_OPS))[0]
-
     def preprocess_mnist(self):
         mnist = input_data.read_data_sets('./MNIST', one_hot=False)
         train_data = []
