@@ -48,7 +48,7 @@ def batch_iter(data, batch_size, shuffle=False):
             shuffled_data = utils.shuffle(shuffled_data)
         yield shuffled_data
 
-def read_data_UCSD(path, shuffle=False, training=True):
+def read_data_UCSD(path, shuffle=False, training=True, reshape=True):
     data = []
     if training:
         dirs = os.listdir(os.path.join(path, 'train'))
@@ -56,18 +56,20 @@ def read_data_UCSD(path, shuffle=False, training=True):
             for img_dir in os.listdir(os.path.join(path, 'train', d, 'box_img')):
                 img = cv2.imread(os.path.join(path, 'train', d, 'box_img', img_dir))
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                img_flat = img.flatten()
-                img_flat = cv2.normalize(img_flat.astype(float), img_flat.astype(float), alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
-                data.append(img_flat)
+                if reshape:
+                    img = img.flatten()
+                img = cv2.normalize(img.astype(float), img.astype(float), alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
+                data.append(img)
     else:
         test_dirs = os.listdir(os.path.join(path, 'test'))
         for test_dir in test_dirs:
             for img_dir in os.listdir(os.path.join(path, 'test', test_dir, 'box_img')):
                 img = cv2.imread(os.path.join(path, 'test', test_dir, 'box_img', img_dir))
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                img_flat = img.flatten()
-                img_flat = cv2.normalize(img_flat.astype(float), img_flat.astype(float), alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
-                data.append(img_flat)
+                if reshape:
+                    img = img.flatten()
+                img = cv2.normalize(img.astype(float), img.astype(float), alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
+                data.append(img)
     print('total load data:%d' % len(data))
     print(np.shape(data))
     if shuffle:
@@ -75,8 +77,7 @@ def read_data_UCSD(path, shuffle=False, training=True):
     return data
 
 def generate_lstm_input(inputs, input_size=45, batch_size=128, time_steps=10, stride=2):
-    if len(inputs.get_shape()) != 2:
-        tf.reshape(inputs, (-1, input_size * input_size))
+    inputs = tf.reshape(inputs, (-1, input_size * input_size))
     t = inputs
     print("inputs:{}".format(inputs.get_shape()))
     for i in range(stride):
