@@ -100,4 +100,4 @@ def psnr(im_true, im_test, max_val=1.0):
     diff = ref_data - target_data
     diff = tf.reshape(diff, (-1,))
     rmse = tf.sqrt( diff ** 2. )
-    return 20*math.log10(max_val/rmse)
+    return 20 * (tf.log(max_val/rmse) / tf.log(10))
