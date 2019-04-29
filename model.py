@@ -4,24 +4,24 @@ class Layers:
     def __init__(self, *args, **kwargs):
         return super().__init__(*args, **kwargs)
     @staticmethod
-    def conv2d(inputs, filters, kernel_size, stride, activation=None, name="conv2d"):
+    def conv2d(inputs, filters, kernel_size, stride, activation=None, name="conv2d", padding="VALID"):
         with tf.variable_scope(name):
             in_dim = inputs.get_shape()[-1].value
             filter_shape = [kernel_size, kernel_size, in_dim, filters]
             W = tf.Variable(tf.random_normal(shape=filter_shape), name='W')
             b = tf.Variable(tf.constant(0.0, shape=[filters]), name='b')
-            return Layers.forward(inputs, W, b, tf.nn.conv2d, stride, activation)
+            return Layers.forward(inputs, W, b, tf.nn.conv2d, stride, activation, padding)
     @staticmethod
     def conv2d_transpose(inputs, filters, kernel_size, strides, padding, output_shape, activation=None, name="conv2d_transpose"):
         '''
             TODO:
-                ddd
+                done
         '''
         with tf.name_scope(name):
             filter_shape = [kernel_size, kernel_size, filters, inputs.get_shape()[-1].value]
             W = tf.Variable(tf.random_normal(filter_shape), name="W")
             b = tf.Variable(tf.constant(0.0, shape=[filters]), name="b")
-            out = tf.nn.conv2d_transpose(inputs, W, output_shape, strides=[1, strides, strides, 1])
+            out = tf.nn.conv2d_transpose(inputs, W, output_shape, strides=[1, strides, strides, 1], padding=padding)
             if activation is not None:
                 return activation(tf.nn.bias_add(out, b))
             else:
@@ -34,16 +34,16 @@ class Layers:
             b = tf.Variable(tf.constant(0.0, shape=[units]), name="b")
             return Layers.forward(inputs, W, b, tf.matmul, None, activation)
     @staticmethod
-    def res_block(inputs, units, name="res_block", is_training=True, activation=None):
+    def res_block(inputs, units, fn, name="res_block", is_training=True, activation=None):
         with tf.name_scope(name):
             # branch a
-            ha = Layers.dense(inputs, units, activation=tf.nn.relu)
+            ha = fn(inputs, units, activation=tf.nn.relu)
             ha_bn = Layers.batch_norm(ha, is_training=is_training)
-            hb = Layers.dense(ha_bn, units, activation=None)
+            hb = fn(ha_bn, units, activation=None)
             hb_bn = Layers.batch_norm(hb, is_training=is_training)
 
             # branch b
-            hc = Layers.dense(inputs, units, activation=tf.nn.relu)
+            hc = fn(inputs, units, activation=tf.nn.relu)
             hc_bn = Layers.batch_norm(hc, is_training=is_training)
 
             # out
@@ -57,9 +57,9 @@ class Layers:
             x, momentum=momentum, epsilon=epsilon, scale=True, training=is_training
         )
     @staticmethod
-    def forward(inputs, W, b, op=None, stride=None, activation=None):
+    def forward(inputs, W, b, op=None, stride=None, activation=None, padding="VALID"):
         if op is tf.nn.conv2d:
-            out = op(inputs, W, strides=[1, stride, stride, 1])
+            out = op(inputs, W, strides=[1, stride, stride, 1], padding=padding)
         elif op is tf.matmul:
             out = op(inputs, W)
         out = tf.nn.bias_add(out, b)
@@ -71,8 +71,8 @@ class Layers:
         def __init__(self, *args, **kwargs):
                 return super().__init__(*args, **kwargs)
         @staticmethod
-        def LSTM(inputs, num_units):
-            with tf.name_scope("lstm"):
+        def LSTM(inputs, num_units, name='lstm'):
+            with tf.name_scope(name):
                 lstms = []
                 for _, unit in enumerate(num_units):
                     h = rnn.BasicLSTMCell(unit)
