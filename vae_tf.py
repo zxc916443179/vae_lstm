@@ -29,20 +29,20 @@ class VAE(object):
         self.batch_size = batch_size
         self.dataset_path = dataset_path
 
-        self.input_x = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h * self.input_w], name="input_x")
+        self.input_x = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
 
 
         self.h, _ = Layers.RNN.LSTM(utils.generate_lstm_input(self.input_x), num_units=[512, 256, 128, 10])
 
         
-        h0 = Layers.dense(self.input_x, 512, activation=tf.nn.leaky_relu, name='encoder_0')
-        h0_res = Layers.res_block(h0, 512, name='res_block_0', is_training=self.training, activation=tf.nn.leaky_relu)
+        # h0 = Layers.dense(self.input_x, 512, activation=tf.nn.leaky_relu, name='encoder_0')
+        # h0_res = Layers.res_block(h0, 512, name='res_block_0', is_training=self.training, activation=tf.nn.leaky_relu)
 
-        h1 = Layers.dense(h0_res, 512, activation=tf.nn.leaky_relu, name='encoder_1')
-        h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training, activation=tf.nn.leaky_relu)
+        # h1 = Layers.dense(h0_res, 512, activation=tf.nn.leaky_relu, name='encoder_1')
+        # h1_res = Layers.res_block(h1, 512, name='res_block_0', is_training=self.training, activation=tf.nn.leaky_relu)
 
-        h2 = Layers.dense(h1_res, 256, activation=tf.nn.leaky_relu, name='encoder_2')
+        h2 = Layers.dense(self.input_x, 256, activation=tf.nn.leaky_relu, name='encoder_2')
         h2_res = Layers.res_block(h2, 256, name="res_block_1", is_training=self.training, activation=tf.nn.leaky_relu)
 
         h3 = Layers.dense(h2_res, 128, activation=tf.nn.leaky_relu, name="encoder")
@@ -64,13 +64,13 @@ class VAE(object):
         o2 = Layers.dense(o1_res, 256, activation=tf.nn.leaky_relu, name="decoder_1")
         o2_res = Layers.res_block(o2, 256, name="res_block_4", is_training=self.training)
 
-        o3 = Layers.dense(o2_res, 512, activation=tf.nn.leaky_relu, name='decoder_2')
-        o3_res = Layers.res_block(o3, 512, name='res_block_5', is_training=self.training)
+        # o3 = Layers.dense(o2_res, 512, activation=tf.nn.leaky_relu, name='decoder_2')
+        # o3_res = Layers.res_block(o3, 512, name='res_block_5', is_training=self.training)
 
-        o4 = Layers.dense(o3_res, 1024, activation=tf.nn.leaky_relu, name='decoder_3')
-        o4_res = Layers.res_block(o4, 1024, name='res_block_5', is_training=self.training)
+        # o4 = Layers.dense(o3_res, 1024, activation=tf.nn.leaky_relu, name='decoder_3')
+        # o4_res = Layers.res_block(o4, 1024, name='res_block_5', is_training=self.training)
 
-        self.out = Layers.dense(o4_res, self.input_w * self.input_h, tf.nn.sigmoid, name="decoder")
+        self.out = Layers.dense(o2_res, self.input_w * self.input_h, None, name="decoder")
 
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2)
@@ -99,8 +99,8 @@ class VAE(object):
         # train_data, test_data = self.preprocess_mnist()
         train_data = utils.read_data_UCSD('UCSDped_patch/ped1', shuffle=True)
         # split train / validation
-        validate_data = train_data[-1000:]
-        train_data = train_data[:-1000]
+        validate_data = train_data[-128:]
+        train_data = train_data[:-128]
         print(len(validate_data))
         global_step = tf.Variable(0, trainable=False, name='global_step')
         # optimizer = tf.train.AdamOptimizer(self.learning_rate)
@@ -137,7 +137,7 @@ class VAE(object):
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
-            self.test(test_data=validate_data, img_size=self.input_h, num_show=200)
+            self.test(test_data=validate_data, img_size=self.input_h, num_show=128)
 
     def test(self, test_data, img_size, num_show):
         recon = self.sess.run(self.out, feed_dict={
