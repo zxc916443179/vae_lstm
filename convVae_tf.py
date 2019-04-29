@@ -73,7 +73,7 @@ class VAE(object):
         o1 = Layers.conv2d_transpose(sampled, 128, 3, 2, padding='VALID', output_shape=[128, h1.get_shape()[1].value, h1.get_shape()[2].value, h1.get_shape()[3].value], activation=tf.nn.leaky_relu)
         self.out = Layers.conv2d_transpose(o1, 1, 3, 2, padding="VALID", output_shape=[128, self.input_x.get_shape()[1].value, self.input_x.get_shape()[2].value, self.input_x.get_shape()[3].value], activation=tf.nn.sigmoid)
         with tf.name_scope('score'):
-            self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2, 1)
+            self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2, (1, 2, 3))
             # self.recon_loss = -tf.reduce_sum(self.input_x * tf.log(1e-8 + self.out) + (1 - self.input_x) * tf.log(1e-8 + 1 - self.out))
             # self.recon_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.out, labels=self.input_x), (1, 2, 3))
             # self.recon_loss = tf.reduce_mean(tf.image.psnr(tf.reshape(self.out, shape=(-1, 28, 28)), tf.reshape(self.input_x, shape=(-1, 28, 28)), max_val=1.0))
