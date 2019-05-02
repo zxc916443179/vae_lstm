@@ -66,8 +66,12 @@ class VAE(object):
 
         mean = Layers.dense(h , 90, activation=tf.nn.sigmoid)
         self.mean = Layers.res_block(mean, 90, fn=Layers.dense, is_training=self.training)
+        self.mean = Layers.dense(self.mean, 90, activation=tf.nn.sigmoid)
+
         var = Layers.dense(h, 90, activation=tf.nn.sigmoid)
         self.var = Layers.res_block(var, 90, fn=Layers.dense, is_training=self.training)
+        self.var = Layers.dense(self.var, 90, activation=tf.nn.sigmoid)
+        
         sampled = Utils.sample(self.mean, self.var)
         sampled = tf.expand_dims(tf.reshape(tf.concat(values=[sampled, self.h], axis=1), (self.batch_size, 10, 10)), axis=-1)
         
