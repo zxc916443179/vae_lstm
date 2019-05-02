@@ -139,9 +139,9 @@ class VAE(object):
         validate_data = train_data[-128:]
         train_data = train_data[:-128]
         global_step = tf.Variable(0, trainable=False, name='global_step')
-        train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss, global_step)
+        learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, 4000, 0.999, staircase=True)
+        train_op = tf.train.AdamOptimizer(learning_rate).minimize(self.loss, global_step)
         # optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
-        # learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, 4000, 0.999, staircase=True)
         # train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.loss, global_step)
         session_conf = tf.ConfigProto(
             allow_soft_placement=True)
