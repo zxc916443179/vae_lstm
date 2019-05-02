@@ -37,7 +37,7 @@ class VAE(object):
 
 
         h1 = Layers.conv2d(self.input_x, 128, 3, 2, activation=tf.nn.leaky_relu, padding='VALID')
-        with tf.name_scope('res_block'):
+        with tf.name_scope('res_block_0'):
             h2 = Layers.conv2d(h1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             h2_bn = Layers.batch_norm(h2, is_training=self.training)
             h3 = Layers.conv2d(h2_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -50,7 +50,7 @@ class VAE(object):
             h5 = h4_bn + h3_bn
 
         h6 = Layers.conv2d(h5, 256, 3, 2, activation=tf.nn.leaky_relu, padding='VALID')
-        with tf.name_scope('res_block'):
+        with tf.name_scope('res_block_1'):
             h7 = Layers.conv2d(h6, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             h7_bn = Layers.batch_norm(h7, is_training=self.training)
             h8 = Layers.conv2d(h7_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -66,22 +66,56 @@ class VAE(object):
 
         mean = Layers.dense(h , 90, activation=tf.nn.sigmoid)
         self.mean = Layers.res_block(mean, 90, fn=Layers.dense, is_training=self.training)
-        var = Layers.dense(h, 90, activation=tf.nn.sigmoid)
-        self.var = Layers.res_block(var, 90, fn=Layers.dense, is_training=self.training)
-        sampled = Utils.sample(self.mean, self.var)
-        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[sampled, self.h], axis=1), (self.batch_size, 10, 10)), axis=-1)
-        o1 = Layers.conv2d_transpose(sampled, 128, 3, 2, padding='VALID', output_shape=[128, h1.get_shape()[1].value, h1.get_shape()[2].value, h1.get_shape()[3].value], activation=tf.nn.leaky_relu)
-        self.out = Layers.conv2d_transpose(o1, 1, 3, 2, padding="VALID", output_shape=[128, self.input_x.get_shape()[1].value, self.input_x.get_shape()[2].value, self.input_x.get_shape()[3].value], activation=tf.nn.sigmoid)
+        # var = Layers.dense(h, 90, activation=tf.nn.sigmoid)
+        # self.var = Layers.res_block(var, 90, fn=Layers.dense, is_training=self.training)
+        # sampled = Utils.sample(self.mean, self.var)
+        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[self.mean, self.h], axis=1), (self.batch_size, 10, 10)), axis=-1)
+        
+        # estimator
+        e1 = Layers.dense(self.mean, 128, activation=tf.nn.leaky_relu)
+        e2 = Layers.dense(e1, 256, activation=tf.nn.leaky_relu)
+        e3 = Layers.dense(e2, 128, activation=tf.nn.leaky_relu)
+        e_out = Layers.dense(e3, 1, activation=tf.nn.sigmoid)
+
+        with tf.name_scope('res_block_3'):
+            d1 = Layers.conv2d(sampled, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d1_bn = Layers.batch_norm(d1, is_training=self.training)
+            d2 = Layers.conv2d(d1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d2_bn = Layers.batch_norm(d2, is_training=self.training)
+
+            
+            d3 = Layers.conv2d(sampled, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d3_bn = Layers.batch_norm(d3, is_training=self.training)
+
+            d = d3_bn + d2_bn
+        
+        o1 = Layers.conv2d_transpose(d, 128, 3, 2, padding='VALID', output_shape=[128, h1.get_shape()[1].value, h1.get_shape()[2].value, h1.get_shape()[3].value], activation=tf.nn.leaky_relu)
+        with tf.name_scope('res_block_3'):
+            d1 = Layers.conv2d(o1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d1_bn = Layers.batch_norm(d1, is_training=self.training)
+            d2 = Layers.conv2d(d1_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d2_bn = Layers.batch_norm(d2, is_training=self.training)
+
+            
+            d3 = Layers.conv2d(o1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d3_bn = Layers.batch_norm(d3, is_training=self.training)
+
+            d = d3_bn + d2_bn
+        
+        self.out = Layers.conv2d_transpose(d, 1, 3, 2, padding="VALID", output_shape=[128, self.input_x.get_shape()[1].value, self.input_x.get_shape()[2].value, self.input_x.get_shape()[3].value], activation=tf.nn.sigmoid)
+        
+        
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2, (1, 2, 3))
             # self.recon_loss = -tf.reduce_sum(self.input_x * tf.log(1e-8 + self.out) + (1 - self.input_x) * tf.log(1e-8 + 1 - self.out))
             # self.recon_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.out, labels=self.input_x), (1, 2, 3))
             self.recon_loss = - utils.psnr(tf.reshape(self.input_x, shape=(-1, 45, 45, 1)), tf.reshape(self.out, shape=(-1, 45, 45, 1)))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
-            self.kl_loss = 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
+            # self.kl_loss = 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
+            self.kl_loss = - tf.reduce_sum(tf.log(e_out), 1)
             self.recon_loss = tf.reduce_mean(self.recon_loss)
             self.kl_loss = tf.reduce_mean(self.kl_loss)
-            self.loss = self.recon_loss * self.alpha - self.kl_loss
+            self.loss = self.recon_loss * self.alpha + self.kl_loss
             self.loss = tf.tuple([self.loss], control_inputs=tf.get_collection(tf.GraphKeys.UPDATE_OPS))[0]
     def preprocess_mnist(self):
         mnist = input_data.read_data_sets('./MNIST', one_hot=False)
@@ -101,10 +135,10 @@ class VAE(object):
         validate_data = train_data[-128:]
         train_data = train_data[:-128]
         global_step = tf.Variable(0, trainable=False, name='global_step')
-        # optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        optimizer = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss, global_step)
         # optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
-        learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, 4000, 0.999, staircase=True)
-        train_op = tf.train.AdamOptimizer(learning_rate).minimize(self.loss, global_step)
+        # learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, 4000, 0.999, staircase=True)
+        # train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.loss, global_step)
         session_conf = tf.ConfigProto(
             allow_soft_placement=True)
         session_conf.gpu_options.allow_growth = True
