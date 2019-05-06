@@ -32,44 +32,73 @@ class VAE(object):
         self.input_x_ = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
         
-        self.h, _ = Layers.RNN.LSTM(utils.generate_lstm_input(self.input_x_), num_units=[512, 256, 128, 10])
+        self.h, _ = Layers.RNN.LSTM(utils.generate_lstm_input(self.input_x_), num_units=[512, 256, 128])
         self.input_x = tf.expand_dims(self.input_x_, -1)
 
 
-        h1 = Layers.conv2d(self.input_x, 128, 3, 2, activation=tf.nn.leaky_relu, padding='VALID')
+        h1 = Layers.conv2d(self.input_x, 128, 3, 1, activation=tf.nn.leaky_relu, padding='VALID') # 43 x 43 x 128
         with tf.name_scope('res_block_0'):
-            h2 = Layers.conv2d(h1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            h2_bn = Layers.batch_norm(h2, is_training=self.training)
-            h3 = Layers.conv2d(h2_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            h3_bn = Layers.batch_norm(h3, is_training=self.training)
+            r1 = Layers.conv2d(h1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r1_bn = Layers.batch_norm(r1, is_training=self.training)
+            r2 = Layers.conv2d(r1_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r2_bn = Layers.batch_norm(r2, is_training=self.training)
 
             
-            h4 = Layers.conv2d(h1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            h4_bn = Layers.batch_norm(h4, is_training=self.training)
+            r3 = Layers.conv2d(h1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r3_bn = Layers.batch_norm(r3, is_training=self.training)
 
-            h5 = h4_bn + h3_bn
-
-        h6 = Layers.conv2d(h5, 256, 3, 2, activation=tf.nn.leaky_relu, padding='VALID')
+            r = r2_bn + r3_bn
+        # 43 x 43 x 128
+        h2 = Layers.conv2d(r, 256, 5, 2, activation=tf.nn.leaky_relu, padding='VALID') # 20 x 20 x 256
         with tf.name_scope('res_block_1'):
-            h7 = Layers.conv2d(h6, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            h7_bn = Layers.batch_norm(h7, is_training=self.training)
-            h8 = Layers.conv2d(h7_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            h8_bn = Layers.batch_norm(h8, is_training=self.training)
+            r1 = Layers.conv2d(h2, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r1_bn = Layers.batch_norm(r1, is_training=self.training)
+            r2 = Layers.conv2d(r1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r2_bn = Layers.batch_norm(r2, is_training=self.training)
 
             
-            h4 = Layers.conv2d(h6, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            h4_bn = Layers.batch_norm(h4, is_training=self.training)
+            r3 = Layers.conv2d(h2, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r3_bn = Layers.batch_norm(r3, is_training=self.training)
 
-            h5 = h4_bn + h8_bn
-        h = Layers.conv2d(h5, 1, 1, 1, activation=tf.nn.sigmoid, padding="VALID")
-        h = tf.reshape(tf.squeeze(h, -1), (self.batch_size, 10 * 10))
+            r = r2_bn + r3_bn
+        
+        h3 = Layers.conv2d(r, 256, 3, 1, activation=tf.nn.leaky_relu, padding='VALID') # 18 x 18 x 256
+        with tf.name_scope('res_block_1'):
+            r1 = Layers.conv2d(h3, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r1_bn = Layers.batch_norm(r1, is_training=self.training)
+            r2 = Layers.conv2d(r1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r2_bn = Layers.batch_norm(r2, is_training=self.training)
 
-        mean = Layers.dense(h , 90, activation=tf.nn.sigmoid)
-        self.mean = Layers.res_block(mean, 90, fn=Layers.dense, is_training=self.training)
+            
+            r3 = Layers.conv2d(h3, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r3_bn = Layers.batch_norm(r3, is_training=self.training)
+
+            r = r2_bn + r3_bn
+
+        # 18 x 18 x 256
+        h4 = Layers.conv2d(r, 128, 3, 1, activation=tf.nn.leaky_relu, padding='VALID') # 16 x 16 x 128
+        with tf.name_scope('res_block_1'):
+            r1 = Layers.conv2d(h4, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r1_bn = Layers.batch_norm(r1, is_training=self.training)
+            r2 = Layers.conv2d(r1_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r2_bn = Layers.batch_norm(r2, is_training=self.training)
+
+            
+            r3 = Layers.conv2d(h4, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            r3_bn = Layers.batch_norm(r3, is_training=self.training)
+
+            r = r2_bn + r3_bn
+
+        # 16 x 16 x 128
+        
+        h = Layers.conv2d(r, 1, 1, 1, activation=tf.nn.sigmoid, padding="VALID")
+        h = tf.reshape(tf.squeeze(h, -1), (self.batch_size, 16 * 16))
+        mean = Layers.dense(h , 128, activation=tf.nn.sigmoid)
+        self.mean = Layers.res_block(mean, 128, fn=Layers.dense, is_training=self.training)
         # var = Layers.dense(h, 90, activation=tf.nn.sigmoid)
         # self.var = Layers.res_block(var, 90, fn=Layers.dense, is_training=self.training)
         # sampled = Utils.sample(self.mean, self.var)
-        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[self.mean, self.h], axis=1), (self.batch_size, 10, 10)), axis=-1)
+        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[self.mean, self.h], axis=1), (self.batch_size, 16, 16)), axis=-1)
         
         # estimator
         e1 = Layers.dense(self.mean, 128, activation=tf.nn.leaky_relu)
@@ -78,31 +107,58 @@ class VAE(object):
         e_out = Layers.dense(e3, 1, activation=tf.nn.sigmoid)
 
         with tf.name_scope('res_block_3'):
-            d1 = Layers.conv2d(sampled, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            d1_bn = Layers.batch_norm(d1, is_training=self.training)
-            d2 = Layers.conv2d(d1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            d2_bn = Layers.batch_norm(d2, is_training=self.training)
-
-            
-            d3 = Layers.conv2d(sampled, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            d3_bn = Layers.batch_norm(d3, is_training=self.training)
-
-            d = d3_bn + d2_bn
-        
-        o1 = Layers.conv2d_transpose(d, 128, 3, 2, padding='VALID', output_shape=[128, h1.get_shape()[1].value, h1.get_shape()[2].value, h1.get_shape()[3].value], activation=tf.nn.leaky_relu)
-        with tf.name_scope('res_block_3'):
-            d1 = Layers.conv2d(o1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d1 = Layers.conv2d(sampled, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d1_bn = Layers.batch_norm(d1, is_training=self.training)
             d2 = Layers.conv2d(d1_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d2_bn = Layers.batch_norm(d2, is_training=self.training)
 
             
-            d3 = Layers.conv2d(o1, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d3 = Layers.conv2d(sampled, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d3_bn = Layers.batch_norm(d3, is_training=self.training)
 
             d = d3_bn + d2_bn
         
-        self.out = Layers.conv2d_transpose(d, 1, 3, 2, padding="VALID", output_shape=[128, self.input_x.get_shape()[1].value, self.input_x.get_shape()[2].value, self.input_x.get_shape()[3].value], activation=tf.nn.sigmoid)
+        o1 = Layers.conv2d_transpose(d, 256, 3, 2, padding='VALID', output_shape=[128, h3.get_shape()[1].value, h3.get_shape()[2].value, h3.get_shape()[3].value], activation=tf.nn.leaky_relu)
+        with tf.name_scope('res_block_3'):
+            d1 = Layers.conv2d(o1, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d1_bn = Layers.batch_norm(d1, is_training=self.training)
+            d2 = Layers.conv2d(d1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d2_bn = Layers.batch_norm(d2, is_training=self.training)
+
+            
+            d3 = Layers.conv2d(o1, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d3_bn = Layers.batch_norm(d3, is_training=self.training)
+
+            d = d3_bn + d2_bn
+        # 18 x 18 x 256
+        o2 = Layers.conv2d_transpose(d, 256, 3, 2, padding='VALID', output_shape=[128, h2.get_shape()[1].value, h2.get_shape()[2].value, h2.get_shape()[3].value], activation=tf.nn.leaky_relu)
+        with tf.name_scope('res_block_3'):
+            d1 = Layers.conv2d(o2, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d1_bn = Layers.batch_norm(d1, is_training=self.training)
+            d2 = Layers.conv2d(d1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d2_bn = Layers.batch_norm(d2, is_training=self.training)
+
+            
+            d3 = Layers.conv2d(o2, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d3_bn = Layers.batch_norm(d3, is_training=self.training)
+
+            d = d3_bn + d2_bn
+        # 20 x 20 x 256
+        o3 = Layers.conv2d_transpose(d, 128, 5, 2, padding='VALID', output_shape=[128, h1.get_shape()[1].value, h1.get_shape()[2].value, h1.get_shape()[3].value], activation=tf.nn.leaky_relu)
+        with tf.name_scope('res_block_3'):
+            d1 = Layers.conv2d(o3, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d1_bn = Layers.batch_norm(d1, is_training=self.training)
+            d2 = Layers.conv2d(d1_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d2_bn = Layers.batch_norm(d2, is_training=self.training)
+
+            
+            d3 = Layers.conv2d(o3, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+            d3_bn = Layers.batch_norm(d3, is_training=self.training)
+
+            d = d3_bn + d2_bn
+        # 43 x 43 x 128
+        self.out = Layers.conv2d_transpose(d, 1, 3, 1, padding="VALID", output_shape=[128, self.input_x.get_shape()[1].value, self.input_x.get_shape()[2].value, self.input_x.get_shape()[3].value], activation=tf.nn.sigmoid)
+        # 45 x 45 x 1
         
         
         with tf.name_scope('score'):
@@ -145,9 +201,10 @@ class VAE(object):
         session_conf.gpu_options.allow_growth = True
         self.sess = tf.Session(config=session_conf)
         self.sess.run(tf.initialize_all_variables())
+        
+        recon_sum = 0
+        kl_sum = 0
         for i in range(flags.epoch):
-            recon_sum = 0
-            kl_sum = 0
             with tf.device('/cpu:0'):
                 batcher = utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True)
             for x in batcher:
