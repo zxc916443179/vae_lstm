@@ -118,7 +118,7 @@ class VAE(object):
 
             d = d3_bn + d2_bn
         
-        o1 = Layers.conv2d_transpose(d, 256, 3, 2, padding='VALID', output_shape=[128, h3.get_shape()[1].value, h3.get_shape()[2].value, h3.get_shape()[3].value], activation=tf.nn.leaky_relu)
+        o1 = Layers.conv2d_transpose(d, 256, 3, 1, padding='VALID', output_shape=[128, h3.get_shape()[1].value, h3.get_shape()[2].value, h3.get_shape()[3].value], activation=tf.nn.leaky_relu)
         with tf.name_scope('res_block_3'):
             d1 = Layers.conv2d(o1, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d1_bn = Layers.batch_norm(d1, is_training=self.training)
@@ -131,7 +131,7 @@ class VAE(object):
 
             d = d3_bn + d2_bn
         # 18 x 18 x 256
-        o2 = Layers.conv2d_transpose(d, 256, 3, 2, padding='VALID', output_shape=[128, h2.get_shape()[1].value, h2.get_shape()[2].value, h2.get_shape()[3].value], activation=tf.nn.leaky_relu)
+        o2 = Layers.conv2d_transpose(d, 256, 3, 1, padding='VALID', output_shape=[128, h2.get_shape()[1].value, h2.get_shape()[2].value, h2.get_shape()[3].value], activation=tf.nn.leaky_relu)
         with tf.name_scope('res_block_3'):
             d1 = Layers.conv2d(o2, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d1_bn = Layers.batch_norm(d1, is_training=self.training)
