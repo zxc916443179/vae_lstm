@@ -208,6 +208,9 @@ class VAE(object):
                 for h in fetch[3]:
                     print(h)
                     input()
+                print(fetch[1])
+                print(fetch[2])
+                input()
                 recon_sum += fetch[1]
                 kl_sum += fetch[2]
                 current_step = tf.train.global_step(self.sess, global_step)
