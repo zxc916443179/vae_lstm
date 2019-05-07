@@ -161,6 +161,7 @@ class VAE(object):
         self.out = Layers.conv2d_transpose(d, 1, 3, 1, padding="VALID", output_shape=[128, self.input_x.get_shape()[1].value, self.input_x.get_shape()[2].value, self.input_x.get_shape()[3].value], activation=tf.nn.sigmoid)
         # 45 x 45 x 1
         
+        self.h = [h1, h2, h3, h4, h, o1, o2, o3, self.out]
         
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2, (1, 2, 3))
@@ -211,9 +212,12 @@ class VAE(object):
             for x in batcher:
                 x = np.asarray(x)
                 fetches = [train_op, self.recon_loss, self.kl_loss]
-                fetch = self.sess.run(fetches, feed_dict={
+                fetch = self.sess.run(self.h, feed_dict={
                     self.input_x_: x, self.training: True
                 })
+                for h in fetch:
+                    print(h)
+                    input()
                 recon_sum += fetch[1]
                 kl_sum += fetch[2]
                 current_step = tf.train.global_step(self.sess, global_step)
