@@ -183,7 +183,7 @@ class VAE(object):
         validate_data = train_data[-128:]
         train_data = train_data[:-128]
         global_step = tf.Variable(0, trainable=False, name='global_step')
-        
+        # optimizer definition
         learning_rate = tf.train.exponential_decay(self.learning_rate, global_step, 4000, 0.999, staircase=True)
         train_op = tf.train.AdamOptimizer(learning_rate).minimize(self.loss, global_step)
         # optimizer = tf.train.GradientDescentOptimizer(self.learning_rate)
@@ -194,6 +194,8 @@ class VAE(object):
         self.sess = tf.Session(config=session_conf)
         self.sess.run(tf.initialize_all_variables())
         
+        # Saver
+        saver = tf.train.Saver(max_to_keep=10)
         recon_sum = 0
         kl_sum = 0
         for i in range(flags.epoch):
@@ -218,20 +220,7 @@ class VAE(object):
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
-                if fetch[1] > 23.0:
-                    recon = self.sess.run(self.out, feed_dict={
-                        self.input_x_: x, self.training: True
-                    })
-                    
-                    recon = recon[:128]
-                    inputs = x[:128]
-                    recon = np.squeeze(recon, -1)
-                    recon = np.reshape(recon, (128, 45, 45))
-                    inputs = np.reshape(inputs, (128, 45, 45))
-                    scipy.misc.imsave('./generate.jpg', utils.montage(recon))
-                    scipy.misc.imsave('./inputs.jpg', utils.montage(inputs))
-                    print('done')
-                    sys.exit(0)
+                    saver.save(self.sess, 'ckpt_lr_%f_alpha_%f/model.ckpt' % (self.learning_rate, self.alpha), global_step=global_step)
             self.test(test_data=validate_data, img_size=self.input_h, num_show=128)
 
     def test(self, test_data, img_size, num_show):
