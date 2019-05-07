@@ -8,6 +8,7 @@ import tensorflow.contrib.rnn as rnn
 from tensorflow.examples.tutorials.mnist import input_data
 from model import Layers, Utils
 import utils
+import sys
 tf.flags.DEFINE_integer('epoch', 10000, "training epoches")
 tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
@@ -32,7 +33,7 @@ class VAE(object):
         self.input_x_ = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
         
-        self.h, _ = Layers.RNN.LSTM(utils.generate_lstm_input(self.input_x_), num_units=[512, 256, 128])
+        self.h, _ = Layers.RNN.LSTM(self.input_x_, num_units=[512, 256, 128])
         self.input_x = tf.expand_dims(self.input_x_, -1)
 
 
@@ -95,16 +96,16 @@ class VAE(object):
         h = tf.reshape(tf.squeeze(h, -1), (self.batch_size, 16 * 16))
         mean = Layers.dense(h , 128, activation=tf.nn.sigmoid)
         self.mean = Layers.res_block(mean, 128, fn=Layers.dense, is_training=self.training)
-        # var = Layers.dense(h, 90, activation=tf.nn.sigmoid)
-        # self.var = Layers.res_block(var, 90, fn=Layers.dense, is_training=self.training)
-        # sampled = Utils.sample(self.mean, self.var)
-        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[self.mean, self.h], axis=1), (self.batch_size, 16, 16)), axis=-1)
+        var = Layers.dense(h, 90, activation=tf.nn.sigmoid)
+        self.var = Layers.res_block(var, 90, fn=Layers.dense, is_training=self.training)
+        sampled = Utils.sample(self.mean, self.var)
+        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[sampled, self.h], axis=1), (self.batch_size, 16, 16)), axis=-1)
         
         # estimator
-        e1 = Layers.dense(self.mean, 128, activation=tf.nn.leaky_relu)
-        e2 = Layers.dense(e1, 256, activation=tf.nn.leaky_relu)
-        e3 = Layers.dense(e2, 128, activation=tf.nn.leaky_relu)
-        e_out = Layers.dense(e3, 1, activation=tf.nn.sigmoid)
+        # e1 = Layers.dense(self.mean, 128, activation=tf.nn.leaky_relu)
+        # e2 = Layers.dense(e1, 256, activation=tf.nn.leaky_relu)
+        # e3 = Layers.dense(e2, 128, activation=tf.nn.leaky_relu)
+        # e_out = Layers.dense(e3, 1, activation=tf.nn.sigmoid)
 
         with tf.name_scope('res_block_3'):
             d1 = Layers.conv2d(sampled, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -167,8 +168,8 @@ class VAE(object):
             # self.recon_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.out, labels=self.input_x), (1, 2, 3))
             self.recon_loss = - utils.psnr(tf.reshape(self.input_x, shape=(-1, 45, 45, 1)), tf.reshape(self.out, shape=(-1, 45, 45, 1)))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
-            # self.kl_loss = 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
-            self.kl_loss = - tf.reduce_sum(tf.log(e_out), 1)
+            self.kl_loss = 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
+            # self.kl_loss = - tf.reduce_sum(tf.log(e_out), 1)
             self.recon_loss = tf.reduce_mean(self.recon_loss)
             self.kl_loss = tf.reduce_mean(self.kl_loss)
             self.loss = self.recon_loss * self.alpha + self.kl_loss
@@ -226,20 +227,40 @@ class VAE(object):
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
+                if fetch[1] > 23.0:
+                    recon = self.sess.run(self.out, feed_dict={
+                        self.input_x_: x, self.training: True
+                    })
+                    
+                    recon = recon[:128]
+                    inputs = x[:128]
+                    recon = np.squeeze(recon, -1)
+                    recon = np.reshape(recon, (128, 45, 45))
+                    inputs = np.reshape(inputs, (128, 45, 45))
+                    scipy.misc.imsave('./generate.jpg', utils.montage(recon))
+                    scipy.misc.imsave('./inputs.jpg', utils.montage(inputs))
+                    print('done')
+                    sys.exit(0)
             self.test(test_data=validate_data, img_size=self.input_h, num_show=128)
 
     def test(self, test_data, img_size, num_show):
         recon = self.sess.run(self.out, feed_dict={
             self.input_x_: test_data, self.training: False
         })
-        recon = recon[0:num_show]
-        inputs = test_data[0:num_show]
+        recon = recon[:num_show]
+        inputs = test_data[:num_show]
         # inputs = np.squeeze(inputs, -1)
         recon = np.reshape(recon, (num_show, img_size, img_size))
         inputs = np.reshape(inputs, (num_show, img_size, img_size))
         scipy.misc.imsave('./generate.jpg', utils.montage(recon))
         scipy.misc.imsave('./inputs.jpg', utils.montage(inputs))
 
+    def save_model(self):
+        '''
+            TODO:
+                save model
+        '''
+        pass
 if __name__ == '__main__':
     vae = VAE(
         input_h=flags.input_size, input_w=flags.input_size, 
