@@ -175,16 +175,6 @@ class VAE(object):
             self.kl_loss = tf.reduce_mean(self.kl_loss)
             self.loss = self.recon_loss * self.alpha + self.kl_loss
             self.loss = tf.tuple([self.loss], control_inputs=tf.get_collection(tf.GraphKeys.UPDATE_OPS))[0]
-    def preprocess_mnist(self):
-        mnist = input_data.read_data_sets('./MNIST', one_hot=False)
-        train_data = []
-        test_data = []
-        for i, l in enumerate(mnist.train.labels):
-            if l != 9:
-                train_data.append(mnist.train.images[i])
-            else:
-                test_data.append(mnist.train.images[i])
-        return train_data, test_data
 
     def train(self):
         # train_data, test_data = self.preprocess_mnist()
@@ -211,11 +201,11 @@ class VAE(object):
                 batcher = utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True)
             for x in batcher:
                 x = np.asarray(x)
-                fetches = [train_op, self.recon_loss, self.kl_loss]
-                fetch = self.sess.run(self.h, feed_dict={
+                fetches = [train_op, self.recon_loss, self.kl_loss, self.h]
+                fetch = self.sess.run(fetches, feed_dict={
                     self.input_x_: x, self.training: True
                 })
-                for h in fetch:
+                for h in fetch[3]:
                     print(h)
                     input()
                 recon_sum += fetch[1]
