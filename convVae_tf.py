@@ -161,7 +161,7 @@ class VAE(object):
         self.out = Layers.conv2d_transpose(d, 1, 3, 1, padding="VALID", output_shape=[128, self.input_x.get_shape()[1].value, self.input_x.get_shape()[2].value, self.input_x.get_shape()[3].value], activation=tf.nn.sigmoid)
         # 45 x 45 x 1
         
-        self.h = [h1, h2, h3, h4, h, o1, o2, o3, self.out]
+        self.h = [h1, h2, h3, h4, self.var, o1, o2, o3, self.out]
         
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2, (1, 2, 3))
@@ -208,6 +208,9 @@ class VAE(object):
                 for h in fetch[3]:
                     print(h)
                     input()
+                print(np.min(fetch[3][4]))
+                if np.min(fetch[3][4]) == 0.0:
+                    sys.exit(0)
                 print(fetch[1])
                 print(fetch[2])
                 input()
