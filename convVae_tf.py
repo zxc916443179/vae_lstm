@@ -201,19 +201,10 @@ class VAE(object):
                 batcher = utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True)
             for x in batcher:
                 x = np.asarray(x)
-                fetches = [train_op, self.recon_loss, self.kl_loss, self.h]
+                fetches = [train_op, self.recon_loss, self.kl_loss]
                 fetch = self.sess.run(fetches, feed_dict={
                     self.input_x_: x, self.training: True
                 })
-                for h in fetch[3]:
-                    print(h)
-                    input()
-                print(np.min(fetch[3][4]))
-                if np.min(fetch[3][4]) == 0.0:
-                    sys.exit(0)
-                print(fetch[1])
-                print(fetch[2])
-                input()
                 recon_sum += fetch[1]
                 kl_sum += fetch[2]
                 current_step = tf.train.global_step(self.sess, global_step)
