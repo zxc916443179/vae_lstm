@@ -22,4 +22,4 @@ with graph.as_default():
         saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
         saver.restore(sess, checkpoint_file)
         print('load success')
-        print(graph.get_all_collection_keys().outputs)
+        print(graph.get_operations())
