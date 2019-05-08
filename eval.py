@@ -14,12 +14,12 @@ if 'Linux' in platform.system():
     os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
 
 graph = tf.Graph()
-graph.as_default()
-sess = tf.Session()
-with sess.as_default():
-    print('loading checkpoint in dir: %s' % flags.checkpoint_dir)
-    checkpoint_file = tf.train.latest_checkpoint(flags.checkpoint_dir)
-    saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
-    saver.restore(sess, checkpoint_file)
-    print('load success')
-    print(graph.get_all_collection_keys())
+with graph.as_default():
+    sess = tf.Session()
+    with sess.as_default():
+        print('loading checkpoint in dir: %s' % flags.checkpoint_dir)
+        checkpoint_file = tf.train.latest_checkpoint(flags.checkpoint_dir)
+        saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
+        saver.restore(sess, checkpoint_file)
+        print('load success')
+        print(graph.get_all_collection_keys().outputs)
