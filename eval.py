@@ -52,4 +52,4 @@ with graph.as_default():
         print(log)
         scipy.misc.imsave('./input.jpg', utils.montage(x))
         recon_out = np.squeeze(recon_out, -1)
-        scipy.misc.imsave('./generate.jpg', utils.montage(x))
+        scipy.misc.imsave('./generate.jpg', utils.montage(recon_out))
