@@ -36,7 +36,7 @@ with graph.as_default():
         for batch in utils.batch_iter(data, 128, shuffle=True):
             x = np.asarray(batch)
             psnr_loss, kl_loss = sess.run([psnr, kl], feed_dict={
-                input_x: x, training: False
+                input_x: x, training: True
             })
             log = 'psnr:%.5f \t kl:%.5f' % (psnr_loss, kl_loss)
             f.writelines(log)
