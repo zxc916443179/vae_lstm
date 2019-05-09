@@ -11,7 +11,7 @@ tf.flags.DEFINE_string("checkpoint_dir", "none", "loading latest checkpoint")
 tf.flags.DEFINE_string('label_dir', './label/label15.p', "dir of label")
 tf.flags.DEFINE_integer('batch_size', 128, 'batch size')
 tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
-
+tf.flags.DEFINE_bool('train', False, 'use train(True) or test(False)')
 flags = tf.flags.FLAGS
 if 'Linux' in platform.system():
     os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
@@ -33,7 +33,7 @@ with graph.as_default():
         kl = graph.get_operation_by_name('score/Mean_2').outputs[0]
         input_x = graph.get_operation_by_name('input_x').outputs[0]
         training = graph.get_operation_by_name('training').outputs[0]
-        data = utils.read_data_UCSD(flags.dataset_path, shuffle=False, reshape=False, training=False)
+        data = utils.read_data_UCSD(flags.dataset_path, shuffle=False, reshape=False, training=flags.train)
         out = graph.get_operation_by_name('score/Reshape_1').outputs[0]
         input_x_ = graph.get_operation_by_name('score/Reshape').outputs[0]
         recon = tf.reduce_sum(tf.square(input_x_ - out), (1, 2, 3))
