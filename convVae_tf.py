@@ -16,6 +16,7 @@ tf.flags.DEFINE_float('alpha', 0.2, 'alpha between kl_loss and recon_loss')
 tf.flags.DEFINE_integer('batch_size', 128, 'batch size')
 tf.flags.DEFINE_integer('input_size', 45, 'size of images(default:28*28)')
 tf.flags.DEFINE_string('dataset_path', './UCSDped_patch/ped1', 'path to dataset')
+tf.flags.DEFINE_bool('fixed_lr', True, 'whether to use fixed learning rate (default: False)')
 flags = tf.flags.FLAGS
 
 if 'Linux' in platform.system():
