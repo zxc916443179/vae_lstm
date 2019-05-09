@@ -64,7 +64,7 @@ class VAE(object):
             r = r2_bn + r3_bn
         
         h3 = Layers.conv2d(r, 256, 3, 1, activation=tf.nn.leaky_relu, padding='VALID') # 18 x 18 x 256
-        with tf.name_scope('res_block_1'):
+        with tf.name_scope('res_block_2'):
             r1 = Layers.conv2d(h3, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             r1_bn = Layers.batch_norm(r1, is_training=self.training)
             r2 = Layers.conv2d(r1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -78,7 +78,7 @@ class VAE(object):
 
         # 18 x 18 x 256
         h4 = Layers.conv2d(r, 128, 3, 1, activation=tf.nn.leaky_relu, padding='VALID') # 16 x 16 x 128
-        with tf.name_scope('res_block_1'):
+        with tf.name_scope('res_block_3'):
             r1 = Layers.conv2d(h4, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             r1_bn = Layers.batch_norm(r1, is_training=self.training)
             r2 = Layers.conv2d(r1_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -107,7 +107,7 @@ class VAE(object):
         # e3 = Layers.dense(e2, 128, activation=tf.nn.leaky_relu)
         # e_out = Layers.dense(e3, 1, activation=tf.nn.sigmoid)
 
-        with tf.name_scope('res_block_3'):
+        with tf.name_scope('res_block_4'):
             d1 = Layers.conv2d(sampled, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d1_bn = Layers.batch_norm(d1, is_training=self.training)
             d2 = Layers.conv2d(d1_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -120,7 +120,7 @@ class VAE(object):
             d = d3_bn + d2_bn
         
         o1 = Layers.conv2d_transpose(d, 256, 3, 1, padding='VALID', output_shape=[128, h3.get_shape()[1].value, h3.get_shape()[2].value, h3.get_shape()[3].value], activation=tf.nn.leaky_relu)
-        with tf.name_scope('res_block_3'):
+        with tf.name_scope('res_block_5'):
             d1 = Layers.conv2d(o1, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d1_bn = Layers.batch_norm(d1, is_training=self.training)
             d2 = Layers.conv2d(d1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -133,7 +133,7 @@ class VAE(object):
             d = d3_bn + d2_bn
         # 18 x 18 x 256
         o2 = Layers.conv2d_transpose(d, 256, 3, 1, padding='VALID', output_shape=[128, h2.get_shape()[1].value, h2.get_shape()[2].value, h2.get_shape()[3].value], activation=tf.nn.leaky_relu)
-        with tf.name_scope('res_block_3'):
+        with tf.name_scope('res_block_6'):
             d1 = Layers.conv2d(o2, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d1_bn = Layers.batch_norm(d1, is_training=self.training)
             d2 = Layers.conv2d(d1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -146,7 +146,7 @@ class VAE(object):
             d = d3_bn + d2_bn
         # 20 x 20 x 256
         o3 = Layers.conv2d_transpose(d, 128, 5, 2, padding='VALID', output_shape=[128, h1.get_shape()[1].value, h1.get_shape()[2].value, h1.get_shape()[3].value], activation=tf.nn.leaky_relu)
-        with tf.name_scope('res_block_3'):
+        with tf.name_scope('res_block_7'):
             d1 = Layers.conv2d(o3, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             d1_bn = Layers.batch_norm(d1, is_training=self.training)
             d2 = Layers.conv2d(d1_bn, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
