@@ -29,8 +29,8 @@ with graph.as_default():
         psnr = graph.get_operation_by_name('score/Mean_1').outputs[0]
         
         kl = graph.get_operation_by_name('score/Mean_2').outputs[0]
-        input_x = graph.get_operation_by_name('input_x')
-        training = graph.get_operation_by_name('training')
+        input_x = graph.get_operation_by_name('input_x').outputs[0]
+        training = graph.get_operation_by_name('training').outputs[0]
         data = utils.read_data_UCSD(flags.dataset_path, shuffle=True, reshape=False)
 
         for batch in utils.batch_iter(data, 128, shuffle=True):
