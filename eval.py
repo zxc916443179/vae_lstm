@@ -32,17 +32,17 @@ with graph.as_default():
         kl = graph.get_operation_by_name('score/Mean_2').outputs[0]
         input_x = graph.get_operation_by_name('input_x').outputs[0]
         training = graph.get_operation_by_name('training').outputs[0]
-        data = utils.read_data_UCSD(flags.dataset_path, shuffle=True, reshape=False)
+        data = utils.read_data_UCSD(flags.dataset_path, shuffle=False, reshape=False, training=False)
         out = graph.get_operation_by_name('score/Reshape_1').outputs[0]
         input_x_ = graph.get_operation_by_name('score/Reshape').outputs[0]
-        recon = tf.reduce_mean(tf.reduce_sum(tf.square(input_x_ - out), 1))
-        for batch in utils.batch_iter(data, 128, shuffle=True):
+        recon = tf.reduce_sum(tf.square(input_x_ - out), 1)
+        for batch in utils.batch_iter(data, 128, shuffle=False):
             x = np.asarray(batch)
             psnr_loss, kl_loss, recon_loss = sess.run([psnr, kl, recon], feed_dict={
                 input_x: x, training: True
             })                            
-            log = 'psnr:%.5f \t kl:%.5f \t recon:%.5f' % (psnr_loss, kl_loss, recon_loss)
-            f.writelines(log)
+            log = 'psnr:%.5f \t kl:%.5f \t recon:%.5f' % (psnr_loss, kl_loss, np.mean(recon_loss))
+            f.writelines(i for i in recon_loss)
             print(log)
         psnr_loss, kl_loss, recon_loss, recon_out = sess.run([psnr, kl, recon, out], feed_dict={
             input_x: x, training: True
