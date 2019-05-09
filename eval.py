@@ -42,8 +42,7 @@ with graph.as_default():
                 input_x: x, training: True
             })                            
             log = 'psnr:%.5f \t kl:%.5f \t recon:%.5f' % (psnr_loss, kl_loss, np.mean(recon_loss))
-            for i in recon_loss:
-                print(i)
+            f.writelines(i for i in recon_loss)
             print(log)
         psnr_loss, kl_loss, recon_loss, recon_out = sess.run([psnr, kl, recon, out], feed_dict={
             input_x: x, training: True
