@@ -35,7 +35,7 @@ with graph.as_default():
         data = utils.read_data_UCSD(flags.dataset_path, shuffle=False, reshape=False, training=False)
         out = graph.get_operation_by_name('score/Reshape_1').outputs[0]
         input_x_ = graph.get_operation_by_name('score/Reshape').outputs[0]
-        recon = tf.reduce_sum(tf.square(input_x_ - out), 1)
+        recon = tf.reduce_sum(tf.square(input_x_ - out), (1, 2, 3))
         for batch in utils.batch_iter(data, 128, shuffle=False):
             x = np.asarray(batch)
             psnr_loss, kl_loss, recon_loss = sess.run([psnr, kl, recon], feed_dict={
