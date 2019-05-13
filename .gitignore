@@ -5,3 +5,4 @@ out
 *.model
 __pycache__
 .vscode
+*.avi
