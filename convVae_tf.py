@@ -17,19 +17,23 @@ tf.flags.DEFINE_integer('batch_size', 128, 'batch size')
 tf.flags.DEFINE_integer('input_size', 45, 'size of images(default:28*28)')
 tf.flags.DEFINE_string('dataset_path', './UCSDped_patch/ped1', 'path to dataset')
 tf.flags.DEFINE_bool('fixed_lr', True, 'whether to use fixed learning rate (default: False)')
+tf.flags.DEFINE_bool('use_pickle', False, 'use image data directly or load data from pickle file (default: False)')
 flags = tf.flags.FLAGS
 
 if 'Linux' in platform.system():
     os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
 class VAE(object):
     def __init__(self, input_h, input_w, batch_size,
-        learning_rate=0.01, alpha=0.2, dataset_path=None):
+        learning_rate=0.01, alpha=0.2, dataset_path=None, use_pickle=False):
+        # training params
         self.input_h = input_h
         self.input_w = input_w
         self.alpha = alpha
         self.learning_rate = learning_rate
         self.batch_size = batch_size
+        # dataset params
         self.dataset_path = dataset_path
+        self.use_pickle = use_pickle
 
         self.input_x_ = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
@@ -179,7 +183,10 @@ class VAE(object):
 
     def train(self):
         # train_data, test_data = self.preprocess_mnist()
-        train_data = utils.read_data_UCSD('UCSDped_patch/ped1', shuffle=True, reshape=False)
+        if not self.use_pickle:
+            train_data = utils.read_data_UCSD(self.dataset_path, shuffle=True, reshape=False)
+        else:
+            train_data = utils.read_pickle_data_UCSD(self.dataset_path, shuffle=False)
         # split train / validation
         validate_data = train_data[-128:]
         train_data = train_data[:-128]
@@ -248,5 +255,5 @@ class VAE(object):
 if __name__ == '__main__':
     vae = VAE(
         input_h=flags.input_size, input_w=flags.input_size, 
-        batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path)
+        batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path, use_pickle=flags.use_pickle)
     vae.train()

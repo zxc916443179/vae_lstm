@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import os
 import cv2
@@ -101,3 +102,21 @@ def psnr(im_true, im_test, max_val=1.0):
     diff = tf.reshape(diff, (128, -1))
     rmse = tf.sqrt(tf.reduce_mean(diff ** 2., 1))
     return 20 * (tf.log(max_val / rmse) / tf.log(10.0))
+
+def read_pickle_data_UCSD(path, shuffle=False, reshape=True, width=45, height=45):
+    opendataset = open(path, 'rb')
+    dataset = []
+    cnt = 0
+    while True:
+        try:
+            tmp = pickle.load(opendataset)
+            if reshape:
+                tmp = np.reshape(tmp, (width, height))
+            dataset.append(tmp)
+            cnt += 1
+        except Exception as e:
+            print(e)
+            break
+    print('totally load data: %d' % cnt)
+    opendataset.close()
+    return dataset
