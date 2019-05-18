@@ -9,6 +9,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 from model import Layers, Utils
 import utils
 import sys
+from error import ModeNotDefinedError
 tf.flags.DEFINE_integer('epoch', 10000, "training epoches")
 tf.flags.DEFINE_string('device', '0', 'cuda visible devices')
 tf.flags.DEFINE_float('learning_rate', 0.01, 'learning rate')
@@ -18,13 +19,15 @@ tf.flags.DEFINE_integer('input_size', 45, 'size of images(default:28*28)')
 tf.flags.DEFINE_string('dataset_path', './UCSDped_patch/ped1', 'path to dataset')
 tf.flags.DEFINE_bool('fixed_lr', True, 'whether to use fixed learning rate (default: False)')
 tf.flags.DEFINE_bool('use_pickle', False, 'use image data directly or load data from pickle file (default: False)')
+tf.flags.DEFINE_string('checkpoint_dir', None, 'directory to checkpoint when finetuning (default: None)')
+tf.flags.DEFINE_string('mode', 'train', 'define the runing mode (options: train, finetune, default: train)')
 flags = tf.flags.FLAGS
 
 if 'Linux' in platform.system():
     os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
 class VAE(object):
     def __init__(self, input_h, input_w, batch_size,
-        learning_rate=0.01, alpha=0.2, dataset_path=None, use_pickle=False):
+        learning_rate=0.01, alpha=0.2, dataset_path=None, use_pickle=False, checkpoint_dir=None, mode='train'):
         # training params
         self.input_h = input_h
         self.input_w = input_w
@@ -34,6 +37,9 @@ class VAE(object):
         # dataset params
         self.dataset_path = dataset_path
         self.use_pickle = use_pickle
+        #finetune params
+        self.mode = mode
+        self.checkpoint_dir = checkpoint_dir
 
         self.input_x_ = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
@@ -203,10 +209,18 @@ class VAE(object):
             allow_soft_placement=True)
         session_conf.gpu_options.allow_growth = True
         self.sess = tf.Session(config=session_conf)
-        self.sess.run(tf.initialize_all_variables())
-        
-        # Saver
-        saver = tf.train.Saver(max_to_keep=10)
+        if self.mode is 'finetune':
+            print('loading checkpint from %s' % (self.checkpoint_dir))
+            checkpoint_file = tf.train.latest_checkpoint(self.checkpoint_dir)
+            saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
+            saver.restore(self.sess, checkpoint_file)
+            print('load success')
+        elif self.mode is 'train':
+            self.sess.run(tf.initialize_all_variables())
+            # Saver
+            saver = tf.train.Saver(max_to_keep=10)
+        else:
+            raise ModeNotDefinedError(self.mode)
         recon_sum = 0
         kl_sum = 0
         for i in range(flags.epoch):
@@ -252,8 +266,10 @@ class VAE(object):
                 save model
         '''
         pass
+    
 if __name__ == '__main__':
     vae = VAE(
         input_h=flags.input_size, input_w=flags.input_size, 
-        batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path, use_pickle=flags.use_pickle)
+        batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path, use_pickle=flags.use_pickle,
+        checkpoint_dir=flags.checkpoint_dir, mode=flags.mode)
     vae.train()
