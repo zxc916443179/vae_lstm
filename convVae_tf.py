@@ -224,7 +224,7 @@ class VAE(object):
             pass
         recon_sum = 0
         kl_sum = 0
-        ckpt_dir = 'ckpt_lr_%f_alpha_%f/model.ckpt' % (self.learning_rate, self.alpha) if self.mode is train else 'ckpt_lr_%f_alpha_%f_finetune/model.ckpt' % (self.learning_rate, self.alpha)
+        ckpt_dir = 'ckpt_lr_%f_alpha_%f/model.ckpt' % (self.learning_rate, self.alpha) if self.mode is 'train' else 'ckpt_lr_%f_alpha_%f_finetune/model.ckpt' % (self.learning_rate, self.alpha)
         for i in range(flags.epoch):
             with tf.device('/cpu:0'):
                 batcher = utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True)
