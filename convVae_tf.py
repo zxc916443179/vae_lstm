@@ -218,12 +218,13 @@ class VAE(object):
         elif self.mode is 'train':
             self.sess.run(tf.initialize_all_variables())
             # Saver
-            saver = tf.train.Saver(max_to_keep=10)
+            saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
         else:
             # raise ModeNotDefinedError(self.mode)
             pass
         recon_sum = 0
         kl_sum = 0
+        previous_recon = 0
         ckpt_dir = 'ckpt_lr_%f_alpha_%f/model.ckpt' % (self.learning_rate, self.alpha) if self.mode is 'train' else 'ckpt_lr_%f_alpha_%f_finetune/model.ckpt' % (self.learning_rate, self.alpha)
         for i in range(flags.epoch):
             with tf.device('/cpu:0'):
@@ -238,7 +239,7 @@ class VAE(object):
                 kl_sum += fetch[2]
                 current_step = tf.train.global_step(self.sess, global_step)
                 if current_step % 50 == 0:
-                    print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, recon_sum / 50, - kl_sum / 50))
+                    print('epoch:%3d \t step:%d \t reon_loss:%.5f \t kl_loss:%.5f' % (i, current_step, recon_sum / 50, kl_sum / 50))
                     recon_sum = 0
                     kl_sum = 0
                 if current_step % 1000 == 0:
@@ -247,7 +248,10 @@ class VAE(object):
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
-                    saver.save(self.sess, ckpt_dir, global_step=global_step)
+                    if previous_recon < fetch[1]:
+                        saver.save(self.sess, ckpt_dir, global_step=global_step)
+                        print('model is saved to %s \t current psnr loss is: %.5f' % (ckpt_dir, fetch[1]))
+                        previous_recon = fetch[1]
             self.test(test_data=validate_data, img_size=self.input_h, num_show=128)
 
     def test(self, test_data, img_size, num_show):
