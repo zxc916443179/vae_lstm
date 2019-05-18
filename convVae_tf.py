@@ -223,6 +223,7 @@ class VAE(object):
             raise ModeNotDefinedError(self.mode)
         recon_sum = 0
         kl_sum = 0
+        ckpt_dir = 'ckpt_lr_%f_alpha_%f/model.ckpt' % (self.learning_rate, self.alpha) if self.mode is train else 'ckpt_lr_%f_alpha_%f_finetune/model.ckpt' % (self.learning_rate, self.alpha)
         for i in range(flags.epoch):
             with tf.device('/cpu:0'):
                 batcher = utils.batch_iter(train_data, batch_size=self.batch_size, shuffle=True)
@@ -245,7 +246,7 @@ class VAE(object):
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
-                    saver.save(self.sess, 'ckpt_lr_%f_alpha_%f/model.ckpt' % (self.learning_rate, self.alpha), global_step=global_step)
+                    saver.save(self.sess, ckpt_dir, global_step=global_step)
             self.test(test_data=validate_data, img_size=self.input_h, num_show=128)
 
     def test(self, test_data, img_size, num_show):
