@@ -220,7 +220,8 @@ class VAE(object):
             # Saver
             saver = tf.train.Saver(max_to_keep=10)
         else:
-            raise ModeNotDefinedError(self.mode)
+            # raise ModeNotDefinedError(self.mode)
+            pass
         recon_sum = 0
         kl_sum = 0
         ckpt_dir = 'ckpt_lr_%f_alpha_%f/model.ckpt' % (self.learning_rate, self.alpha) if self.mode is train else 'ckpt_lr_%f_alpha_%f_finetune/model.ckpt' % (self.learning_rate, self.alpha)
