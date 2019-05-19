@@ -281,5 +281,5 @@ if __name__ == '__main__':
         checkpoint_dir=flags.checkpoint_dir, mode=flags.mode)
     try:
         vae.train()
-    except ModuleNotFoundError as e:
+    except ModeNotDefinedError as e:
         print(e)
