@@ -221,7 +221,7 @@ class VAE(object):
             # Saver
             saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
         else:
-            # raise ModeNotDefinedError(self.mode)
+            raise ModeNotDefinedError(self.mode)
             pass
         recon_sum = 0
         kl_sum = 0
@@ -279,4 +279,7 @@ if __name__ == '__main__':
         input_h=flags.input_size, input_w=flags.input_size, 
         batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path, use_pickle=flags.use_pickle,
         checkpoint_dir=flags.checkpoint_dir, mode=flags.mode)
-    vae.train()
+    try:
+        vae.train()
+    except ModuleNotFoundError as e:
+        print(e)
