@@ -40,7 +40,8 @@ class VAE(object):
         #finetune params
         self.mode = mode
         self.checkpoint_dir = checkpoint_dir
-
+        assert self.mode is 'finetune'
+        assert self.mode is 'train'
         self.input_x_ = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
         
