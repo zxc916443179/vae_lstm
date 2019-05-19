@@ -40,10 +40,7 @@ class VAE(object):
         #finetune params
         self.mode = mode
         self.checkpoint_dir = checkpoint_dir
-        print(self.mode)
-        print(type(self.mode))
-        assert self.mode == 'finetune'
-        assert self.mode is 'train'
+
         self.input_x_ = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
         
@@ -213,19 +210,19 @@ class VAE(object):
         session_conf.gpu_options.allow_growth = True
         print('start session')
         self.sess = tf.Session(config=session_conf)
-        if self.mode is 'finetune':
+        if self.mode == 'finetune':
             print('loading checkpint from %s' % (self.checkpoint_dir))
             checkpoint_file = tf.train.latest_checkpoint(self.checkpoint_dir)
             saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
             saver.restore(self.sess, checkpoint_file)
             print('load success')
-        elif self.mode is 'train':
+        elif self.mode == 'train':
             print('training')
-            self.sess.run(tf.initialize_all_variables())
+            self.sess.run(tf.global_variables_initializer())
             # Saver
             saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
         else:
-            print('given mode not found, expect (train or finetune) but get %s' % self.mode)
+            raise ModeNotDefinedError('given mode not found, expect (train or finetune) but get %s' % self.mode)
             pass
         recon_sum = 0
         kl_sum = 0
