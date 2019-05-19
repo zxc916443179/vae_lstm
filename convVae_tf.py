@@ -210,11 +210,14 @@ class VAE(object):
         session_conf.gpu_options.allow_growth = True
         print('start session')
         self.sess = tf.Session(config=session_conf)
+        self.sess.run(tf.global_variables_initializer())
+        # Saver
+        saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
         if self.mode == 'finetune':
-            print('loading checkpint from %s' % (self.checkpoint_dir))
             checkpoint_file = tf.train.latest_checkpoint(self.checkpoint_dir)
-            saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
-            saver.restore(self.sess, checkpoint_file)
+            print('loading checkpint from %s' % (checkpoint_file))
+            saver_old = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
+            saver_old.restore(self.sess, checkpoint_file)
             print('load success')
             global_vars          = tf.global_variables()
             is_not_initialized   = self.sess.run([tf.is_variable_initialized(var) for var in global_vars])
@@ -222,9 +225,7 @@ class VAE(object):
             print([str(i.name) for i in not_initialized_vars])
         elif self.mode == 'train':
             print('training')
-            self.sess.run(tf.global_variables_initializer())
-            # Saver
-            saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
+            
         else:
             raise ModeNotDefinedError('given mode not found, expect (train or finetune) but get %s' % self.mode)
             pass
