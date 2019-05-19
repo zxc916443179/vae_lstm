@@ -42,7 +42,7 @@ class VAE(object):
         self.checkpoint_dir = checkpoint_dir
         print(self.mode)
         print(type(self.mode))
-        assert self.mode is 'finetune'
+        assert self.mode == 'finetune'
         assert self.mode is 'train'
         self.input_x_ = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
