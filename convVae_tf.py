@@ -208,6 +208,7 @@ class VAE(object):
         session_conf = tf.ConfigProto(
             allow_soft_placement=True)
         session_conf.gpu_options.allow_growth = True
+        print('start session')
         self.sess = tf.Session(config=session_conf)
         if self.mode is 'finetune':
             print('loading checkpint from %s' % (self.checkpoint_dir))
