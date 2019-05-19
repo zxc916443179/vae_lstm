@@ -222,7 +222,7 @@ class VAE(object):
             # Saver
             saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
         else:
-            raise ModeNotDefinedError(self.mode)
+            print('given mode not found, expect (train or finetune) but get %s' % self.mode)
             pass
         recon_sum = 0
         kl_sum = 0
