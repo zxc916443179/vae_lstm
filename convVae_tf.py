@@ -210,13 +210,14 @@ class VAE(object):
         session_conf.gpu_options.allow_growth = True
         print('start session')
         self.sess = tf.Session(config=session_conf)
-        if self.mode == 'finetune':
+        if self.mode is 'finetune':
             print('loading checkpint from %s' % (self.checkpoint_dir))
             checkpoint_file = tf.train.latest_checkpoint(self.checkpoint_dir)
             saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
             saver.restore(self.sess, checkpoint_file)
             print('load success')
-        elif self.mode == 'train':
+        elif self.mode is 'train':
+            print('training')
             self.sess.run(tf.initialize_all_variables())
             # Saver
             saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
