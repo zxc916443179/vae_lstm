@@ -214,7 +214,8 @@ class VAE(object):
         if self.mode == 'finetune':
             checkpoint_file = tf.train.latest_checkpoint(self.checkpoint_dir)
             print('loading checkpint from %s' % (checkpoint_file))
-            saver_old = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
+            # saver_old = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
+            saver_old = tf.train.Saver(tf.global_variables())
             saver_old.restore(self.sess, checkpoint_file)
             print('load success')
             global_vars          = tf.global_variables()
@@ -229,7 +230,7 @@ class VAE(object):
         
         # Saver
         saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
-        
+
         recon_sum = 0
         kl_sum = 0
         previous_recon = 0
