@@ -281,6 +281,7 @@ class VAE(object):
         pass
     
 if __name__ == '__main__':
+    tf.app.run()
     vae = VAE(
         input_h=flags.input_size, input_w=flags.input_size, 
         batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path, use_pickle=flags.use_pickle,
