@@ -6,7 +6,6 @@ import numpy as np
 import scipy
 import sys
 tf.flags.DEFINE_string("dataset_path", './UCSDped_patch/ped1', "dataset path")
-tf.flags.DEFINE_integer("max", 10000, "max number of dataset")
 tf.flags.DEFINE_string("checkpoint_dir", "none", "loading latest checkpoint")
 tf.flags.DEFINE_string('label_dir', './label/label15.p', "dir of label")
 tf.flags.DEFINE_integer('batch_size', 128, 'batch size')
