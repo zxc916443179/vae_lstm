@@ -210,7 +210,6 @@ class VAE(object):
         session_conf.gpu_options.allow_growth = True
         print('start session')
         self.sess = tf.Session(config=session_conf)
-        # self.sess.run(tf.global_variables_initializer())
         if self.mode == 'finetune':
             checkpoint_file = tf.train.latest_checkpoint(self.checkpoint_dir)
             print('loading checkpint from %s' % (checkpoint_file))
@@ -224,7 +223,7 @@ class VAE(object):
             print([str(i.name) for i in not_initialized_vars])
         elif self.mode == 'train':
             print('training')
-            
+            self.sess.run(tf.global_variables_initializer())
         else:
             raise ModeNotDefinedError('given mode not found, expect (train or finetune) but get %s' % self.mode)
         
