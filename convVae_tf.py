@@ -279,9 +279,7 @@ class VAE(object):
                 save model
         '''
         pass
-    
-if __name__ == '__main__':
-    tf.app.run()
+def main(argv=None):
     vae = VAE(
         input_h=flags.input_size, input_w=flags.input_size, 
         batch_size=flags.batch_size, learning_rate=flags.learning_rate, alpha=flags.alpha, dataset_path=flags.dataset_path, use_pickle=flags.use_pickle,
@@ -290,3 +288,7 @@ if __name__ == '__main__':
         vae.train()
     except ModeNotDefinedError as e:
         print(e)
+
+if __name__ == '__main__':
+    tf.app.run()
+    
