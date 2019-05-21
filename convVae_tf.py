@@ -260,7 +260,7 @@ class VAE(object):
                     if previous_recon < np.abs(fetch[1]):
                         saver.save(self.sess, ckpt_dir, global_step=global_step)
                         print('model is saved to %s \t current psnr loss is: %.5f' % (ckpt_dir, fetch[1]))
-                        previous_recon = fetch[1]
+                        previous_recon = np.abs(fetch[1])
             self.test(test_data=validate_data, img_size=self.input_h, num_show=128)
 
     def test(self, test_data, img_size, num_show):
