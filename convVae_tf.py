@@ -211,8 +211,6 @@ class VAE(object):
         print('start session')
         self.sess = tf.Session(config=session_conf)
         self.sess.run(tf.global_variables_initializer())
-        # Saver
-        saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
         if self.mode == 'finetune':
             checkpoint_file = tf.train.latest_checkpoint(self.checkpoint_dir)
             print('loading checkpint from %s' % (checkpoint_file))
@@ -228,7 +226,10 @@ class VAE(object):
             
         else:
             raise ModeNotDefinedError('given mode not found, expect (train or finetune) but get %s' % self.mode)
-            pass
+        
+        # Saver
+        saver = tf.train.Saver(max_to_keep=10, var_list=tf.global_variables())
+        
         recon_sum = 0
         kl_sum = 0
         previous_recon = 0
