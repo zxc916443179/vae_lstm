@@ -253,7 +253,7 @@ class VAE(object):
                     kl_sum = 0
                 if current_step % 1000 == 0:
                     loss, kl_loss = self.sess.run([self.recon_loss, self.kl_loss], feed_dict={
-                        self.input_x_: validate_data, self.training: False
+                        self.input_x_: validate_data, self.training: True
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
@@ -265,7 +265,7 @@ class VAE(object):
 
     def test(self, test_data, img_size, num_show):
         recon = self.sess.run(self.out, feed_dict={
-            self.input_x_: test_data, self.training: False
+            self.input_x_: test_data, self.training: True
         })
         recon = recon[:num_show]
         inputs = test_data[:num_show]
