@@ -18,6 +18,6 @@ gt = [
 dirs = os.listdir(os.path.join('UCSDped_patch', 'ped2', 'test'))
 print(dirs)
 input()
-for d in dirs:
-    for img_dir in os.listdir(os.path.join('UCSDped_patch', 'ped2', 'test', d, 'box_img')):
+for d in sorted(dirs):
+    for img_dir in sorted(os.listdir(os.path.join('UCSDped_patch', 'ped2', 'test', d, 'box_img'))):
         print(img_dir)
