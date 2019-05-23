@@ -44,7 +44,7 @@ class VAE(object):
         self.input_x_ = tf.placeholder(tf.float32, shape=[self.batch_size, self.input_h, self.input_w], name="input_x")
         self.training = tf.placeholder(tf.bool, name="training")
         
-        self.h, _ = Layers.RNN.LSTM(self.input_x_, num_units=[512, 256, 128])
+        self.h, _ = Layers.RNN.LSTM(self.input_x_, num_units=[512, 256, 162])
         self.input_x = tf.expand_dims(self.input_x_, -1)
 
 
@@ -90,7 +90,7 @@ class VAE(object):
 
         # 18 x 18 x 256
         # ----------------------------------------------------------------------------
-        h4 = Layers.conv2d(r, 128, 3, 1, activation=tf.nn.leaky_relu, padding='VALID') # 16 x 16 x 128
+        h4 = Layers.conv2d(r, 128, 3, 1, activation=tf.nn.leaky_relu, padding='SAME') # 18 x 18 x 128
         with tf.name_scope('res_block_3'):
             r1 = Layers.conv2d(h4, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
             r1_bn = Layers.batch_norm(r1, is_training=self.training)
@@ -103,17 +103,17 @@ class VAE(object):
 
             r = r2_bn + r3_bn
 
-        # 16 x 16 x 128
+        # 18 x 18 x 128
         # ----------------------------------------------------------------------------
         
-        h = Layers.conv2d(r, 1, 1, 1, activation=tf.nn.sigmoid, padding="VALID") # 16 x 16 x 1
-        h = tf.reshape(tf.squeeze(h, -1), (self.batch_size, 16 * 16))
-        self.mean = Layers.dense(h , 128, activation=tf.nn.sigmoid)
+        h = Layers.conv2d(r, 1, 1, 1, activation=tf.nn.sigmoid, padding="VALID") # 18 x 18 x 1
+        h = tf.reshape(tf.squeeze(h, -1), (self.batch_size, 18 * 18))
+        self.mean = Layers.dense(h , 162, activation=tf.nn.sigmoid)
         # self.mean = Layers.res_block(mean, 128, fn=Layers.dense, is_training=self.training)
         # self.var = Layers.dense(h, 128, activation=tf.nn.sigmoid)
         # self.var = Layers.res_block(var, 128, fn=Layers.dense, is_training=self.training)
         # sampled = Utils.sample(self.mean, self.var)
-        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[self.mean, self.h], axis=1), (self.batch_size, 16, 16)), axis=-1)
+        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[self.mean, self.h], axis=1), (self.batch_size, 18, 18)), axis=-1)
         
         # estimator
         # e1 = Layers.dense(self.mean, 128, activation=tf.nn.leaky_relu)
@@ -133,18 +133,18 @@ class VAE(object):
 
             d = d3_bn + d2_bn
         
-        o1 = Layers.conv2d_transpose(d, 256, 3, 1, padding='VALID', output_shape=[128, h3.get_shape()[1].value, h3.get_shape()[2].value, h3.get_shape()[3].value], activation=tf.nn.leaky_relu)
-        with tf.name_scope('res_block_5'):
-            d1 = Layers.conv2d(o1, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            d1_bn = Layers.batch_norm(d1, is_training=self.training)
-            d2 = Layers.conv2d(d1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            d2_bn = Layers.batch_norm(d2, is_training=self.training)
+        # o1 = Layers.conv2d_transpose(d, 256, 3, 1, padding='VALID', output_shape=[128, h3.get_shape()[1].value, h3.get_shape()[2].value, h3.get_shape()[3].value], activation=tf.nn.leaky_relu)
+        # with tf.name_scope('res_block_5'):
+        #     d1 = Layers.conv2d(o1, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+        #     d1_bn = Layers.batch_norm(d1, is_training=self.training)
+        #     d2 = Layers.conv2d(d1_bn, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+        #     d2_bn = Layers.batch_norm(d2, is_training=self.training)
 
             
-            d3 = Layers.conv2d(o1, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
-            d3_bn = Layers.batch_norm(d3, is_training=self.training)
+        #     d3 = Layers.conv2d(o1, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
+        #     d3_bn = Layers.batch_norm(d3, is_training=self.training)
 
-            d = d3_bn + d2_bn
+        #     d = d3_bn + d2_bn
         # 18 x 18 x 256
         # ----------------------------------------------------------------------------
 
