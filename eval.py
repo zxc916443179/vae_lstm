@@ -50,7 +50,11 @@ with graph.as_default():
             score = np.concatenate((score, recon_loss), -1)
 
         fpr, tpr, threshold, acc = auroc.auroc(score, flags.label_dir)
-        auroc.plot_roc(fpr, tpr)
+        # auroc.plot_roc(fpr, tpr)
+        fpr = np.array(fpr)
+        tpr = np.array(tpr)
+        fpr.tofile('fpr.bin')
+        tpr.tofile('tpr.bin')
 
         psnr_loss, kl_loss, recon_loss, recon_out = sess.run([psnr, kl, recon, out], feed_dict={
             input_x: x, training: True
