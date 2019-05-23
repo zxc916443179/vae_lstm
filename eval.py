@@ -50,6 +50,8 @@ def main(argv=None):
                 score = np.concatenate((score, recon_loss), -1)
 
             fpr, tpr, threshold, acc = auroc.auroc(score, flags.label_dir)
+            print(acc)
+            print(threshold)
             # auroc.plot_roc(fpr, tpr)
             fpr = np.array(fpr)
             tpr = np.array(tpr)
