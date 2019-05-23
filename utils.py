@@ -142,7 +142,7 @@ def load_label(path, flatten=False):
         for label_file in sorted(os.listdir(os.path.join(path, label_dir))):
             label = np.fromfile(os.path.join(path, label_dir, label_file), dtype=int, sep='\n')
             labels.append(label)
-            cnt += 1
+            cnt += len(label)
     labels = np.asarray(labels)
     if flatten:
         label_t = []
