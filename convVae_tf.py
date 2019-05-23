@@ -37,7 +37,7 @@ class VAE(object):
         # dataset params
         self.dataset_path = dataset_path
         self.use_pickle = use_pickle
-        #finetune params
+        # finetune params
         self.mode = mode
         self.checkpoint_dir = checkpoint_dir
 
@@ -61,6 +61,7 @@ class VAE(object):
 
             r = r2_bn + r3_bn
         # 43 x 43 x 128
+        # ----------------------------------------------------------------------------
         h2 = Layers.conv2d(r, 256, 5, 2, activation=tf.nn.leaky_relu, padding='VALID') # 20 x 20 x 256
         with tf.name_scope('res_block_1'):
             r1 = Layers.conv2d(h2, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -88,6 +89,7 @@ class VAE(object):
             r = r2_bn + r3_bn
 
         # 18 x 18 x 256
+        # ----------------------------------------------------------------------------
         h4 = Layers.conv2d(r, 128, 3, 1, activation=tf.nn.leaky_relu, padding='VALID') # 16 x 16 x 128
         with tf.name_scope('res_block_3'):
             r1 = Layers.conv2d(h4, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -102,8 +104,9 @@ class VAE(object):
             r = r2_bn + r3_bn
 
         # 16 x 16 x 128
+        # ----------------------------------------------------------------------------
         
-        h = Layers.conv2d(r, 1, 1, 1, activation=tf.nn.sigmoid, padding="VALID")
+        h = Layers.conv2d(r, 1, 1, 1, activation=tf.nn.sigmoid, padding="VALID") # 16 x 16 x 1
         h = tf.reshape(tf.squeeze(h, -1), (self.batch_size, 16 * 16))
         self.mean = Layers.dense(h , 128, activation=tf.nn.sigmoid)
         # self.mean = Layers.res_block(mean, 128, fn=Layers.dense, is_training=self.training)
@@ -143,6 +146,8 @@ class VAE(object):
 
             d = d3_bn + d2_bn
         # 18 x 18 x 256
+        # ----------------------------------------------------------------------------
+
         o2 = Layers.conv2d_transpose(d, 256, 3, 1, padding='VALID', output_shape=[128, h2.get_shape()[1].value, h2.get_shape()[2].value, h2.get_shape()[3].value], activation=tf.nn.leaky_relu)
         with tf.name_scope('res_block_6'):
             d1 = Layers.conv2d(o2, 256, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -156,6 +161,8 @@ class VAE(object):
 
             d = d3_bn + d2_bn
         # 20 x 20 x 256
+        # ----------------------------------------------------------------------------
+
         o3 = Layers.conv2d_transpose(d, 128, 5, 2, padding='VALID', output_shape=[128, h1.get_shape()[1].value, h1.get_shape()[2].value, h1.get_shape()[3].value], activation=tf.nn.leaky_relu)
         with tf.name_scope('res_block_7'):
             d1 = Layers.conv2d(o3, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -169,8 +176,11 @@ class VAE(object):
 
             d = d3_bn + d2_bn
         # 43 x 43 x 128
+        # ----------------------------------------------------------------------------
+
         self.out = Layers.conv2d_transpose(d, 1, 3, 1, padding="VALID", output_shape=[128, self.input_x.get_shape()[1].value, self.input_x.get_shape()[2].value, self.input_x.get_shape()[3].value], activation=tf.nn.sigmoid)
         # 45 x 45 x 1
+        # ----------------------------------------------------------------------------
         
         self.h = [h1, h2, h3, h4, self.var, o1, o2, o3, self.out]
         
