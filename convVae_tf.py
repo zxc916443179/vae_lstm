@@ -116,10 +116,10 @@ class VAE(object):
         sampled = tf.expand_dims(tf.reshape(tf.concat(values=[self.mean, self.h], axis=1), (self.batch_size, 16, 16)), axis=-1)
         
         # estimator
-        # e1 = Layers.dense(self.mean, 128, activation=tf.nn.leaky_relu)
-        # e2 = Layers.dense(e1, 256, activation=tf.nn.leaky_relu)
-        # e3 = Layers.dense(e2, 128, activation=tf.nn.leaky_relu)
-        # e_out = Layers.dense(e3, 1, activation=tf.nn.sigmoid)
+        e1 = Layers.dense(self.mean, 128, activation=tf.nn.leaky_relu)
+        e2 = Layers.dense(e1, 256, activation=tf.nn.leaky_relu)
+        e3 = Layers.dense(e2, 128, activation=tf.nn.leaky_relu)
+        e_out = Layers.dense(e3, 1, activation=tf.nn.sigmoid)
 
         with tf.name_scope('res_block_4'):
             d1 = Layers.conv2d(sampled, 128, 3, 1, activation=tf.nn.leaky_relu, padding="SAME")
@@ -190,8 +190,8 @@ class VAE(object):
             # self.recon_loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.out, labels=self.input_x), (1, 2, 3))
             self.recon_loss = - utils.psnr(tf.reshape(self.input_x, shape=(-1, 45, 45, 1)), tf.reshape(self.out, shape=(-1, 45, 45, 1)))
             # self.recon_loss = tf.losses.mean_pairwise_squared_error(self.input_x, self.out)
-            self.kl_loss = - 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
-            # self.kl_loss = - tf.reduce_sum(tf.log(e_out), 1)
+            # self.kl_loss = - 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
+            self.kl_loss = - tf.reduce_sum(tf.log(e_out), 1)
             self.recon_loss = tf.reduce_mean(self.recon_loss)
             self.kl_loss = tf.reduce_mean(self.kl_loss)
             self.loss = self.recon_loss * self.alpha + self.kl_loss
