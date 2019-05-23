@@ -26,8 +26,8 @@ def main(argv=None):
             saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
             saver.restore(sess, checkpoint_file)
             print('load success')
-            # for operation in graph.get_operations():
-            #     print(operation)
+            for operation in graph.get_operations():
+                print(operation)
             psnr = graph.get_operation_by_name('score/Mean_1').outputs[0]
             
             kl = graph.get_operation_by_name('score/Mean_2').outputs[0]
@@ -48,7 +48,6 @@ def main(argv=None):
                 log = 'psnr:%.5f \t kl:%.5f \t recon:%.5f' % (psnr_loss, kl_loss, np.mean(recon_loss))
                 print(log)
                 score = np.concatenate((score, recon_loss), -1)
-
             fpr, tpr, threshold, acc = auroc.auroc(score, flags.label_dir)
             print(acc)
             print(threshold)
