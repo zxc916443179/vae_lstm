@@ -26,8 +26,8 @@ def main(argv=None):
             saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
             saver.restore(sess, checkpoint_file)
             print('load success')
-            for operation in graph.get_operations():
-                print(operation)
+            # for operation in graph.get_operations():
+            #     print(operation)
             psnr = graph.get_operation_by_name('score/Mean_1').outputs[0]
             
             kl = graph.get_operation_by_name('score/Mean_2').outputs[0]
@@ -37,17 +37,18 @@ def main(argv=None):
             out = graph.get_operation_by_name('score/Reshape_1').outputs[0]
             input_x_ = graph.get_operation_by_name('score/Reshape').outputs[0]
             recon = tf.reduce_sum(tf.square(input_x_ - out), (1, 2, 3))
+            loss = graph.get_operation_by_name('score/add_1').outputs[0]
             score = []
             for batch in utils.batch_iter(data, 128, shuffle=False):
                 x = np.asarray(batch)
                 if len(x) < 128:
                     continue
-                psnr_loss, kl_loss, recon_loss = sess.run([psnr, kl, recon], feed_dict={
+                psnr_loss, kl_loss, recon_loss, loss = sess.run([psnr, kl, recon, loss], feed_dict={
                     input_x: x, training: True
                 })
                 log = 'psnr:%.5f \t kl:%.5f \t recon:%.5f' % (psnr_loss, kl_loss, np.mean(recon_loss))
                 print(log)
-                score = np.concatenate((score, recon_loss), -1)
+                score = np.concatenate((score, loss), -1)
             fpr, tpr, threshold, acc = auroc.auroc(score, flags.label_dir)
             print(acc)
             print(threshold)
