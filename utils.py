@@ -63,9 +63,9 @@ def read_data_UCSD(path, shuffle=False, training=True, reshape=True):
                 img = cv2.normalize(img.astype(float), img.astype(float), alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
                 data.append(img)
     else:
-        test_dirs = os.listdir(os.path.join(path, 'test'))
+        test_dirs = sorted(os.listdir(os.path.join(path, 'test')))
         for test_dir in test_dirs:
-            for img_dir in os.listdir(os.path.join(path, 'test', test_dir, 'box_img')):
+            for img_dir in sorted(os.listdir(os.path.join(path, 'test', test_dir, 'box_img'))):
                 img = cv2.imread(os.path.join(path, 'test', test_dir, 'box_img', img_dir))
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 if reshape:
@@ -120,3 +120,34 @@ def read_pickle_data_UCSD(path, shuffle=False, reshape=True, width=45, height=45
     print('totally load data: %d' % cnt)
     opendataset.close()
     return dataset
+
+def load_label(path, flatten=False):
+    '''
+        params:
+            path: path to label's father dir
+            flatten: flatten the label array
+        return:
+            labels -> ndarray
+            cnt -> int
+
+
+    '''
+    label_dirs = sorted(os.listdir(path))
+    labels = []
+    cnt = 0
+    for label_dir in label_dirs:
+        if not os.path.isdir(os.path.join(path, label_dir)):
+            continue
+        print(label_dir)
+        for label_file in sorted(os.listdir(os.path.join(path, label_dir))):
+            label = np.fromfile(os.path.join(path, label_dir, label_file), dtype=int, sep='\n')
+            labels.append(label)
+            cnt += 1
+    labels = np.asarray(labels)
+    if flatten:
+        label_t = []
+        for label in labels:
+            label_t = np.concatenate((label_t, label), -1)
+        labels = label_t
+    print('totally load %d' % cnt)
+    return labels, cnt
