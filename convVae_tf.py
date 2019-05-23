@@ -182,7 +182,7 @@ class VAE(object):
         # 45 x 45 x 1
         # ----------------------------------------------------------------------------
         
-        self.h = [h1, h2, h3, h4, self.var, o1, o2, o3, self.out]
+        # self.h = [h1, h2, h3, h4, self.var, o1, o2, o3, self.out]
         
         with tf.name_scope('score'):
             # self.recon_loss = tf.reduce_sum((self.out - self.input_x) ** 2, (1, 2, 3))
