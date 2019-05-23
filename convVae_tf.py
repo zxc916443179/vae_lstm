@@ -110,10 +110,10 @@ class VAE(object):
         h = tf.reshape(tf.squeeze(h, -1), (self.batch_size, 16 * 16))
         self.mean = Layers.dense(h , 128, activation=tf.nn.sigmoid)
         # self.mean = Layers.res_block(mean, 128, fn=Layers.dense, is_training=self.training)
-        self.var = Layers.dense(h, 128, activation=tf.nn.sigmoid)
+        # self.var = Layers.dense(h, 128, activation=tf.nn.sigmoid)
         # self.var = Layers.res_block(var, 128, fn=Layers.dense, is_training=self.training)
-        sampled = Utils.sample(self.mean, self.var)
-        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[sampled, self.h], axis=1), (self.batch_size, 16, 16)), axis=-1)
+        # sampled = Utils.sample(self.mean, self.var)
+        sampled = tf.expand_dims(tf.reshape(tf.concat(values=[self.mean, self.h], axis=1), (self.batch_size, 16, 16)), axis=-1)
         
         # estimator
         # e1 = Layers.dense(self.mean, 128, activation=tf.nn.leaky_relu)
