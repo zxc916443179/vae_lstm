@@ -193,7 +193,7 @@ class VAE(object):
             # self.kl_loss = - 0.5 * tf.reduce_sum(1.0 + tf.log(self.var ** 2) - self.mean ** 2 - self.var ** 2, 1)
             # self.kl_loss = tf.reduce_sum(tf.log(e_out), 1)
             self.recon_loss = tf.reduce_mean(self.recon_loss)
-            self.kl_loss = tf.reduce_mean(self.kl_loss)
+            self.kl_loss = tf.reduce_mean(tf.constant(0))
             self.loss = self.recon_loss
             self.loss = tf.tuple([self.loss], control_inputs=tf.get_collection(tf.GraphKeys.UPDATE_OPS))[0]
 
