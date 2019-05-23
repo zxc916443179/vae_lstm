@@ -36,19 +36,19 @@ def main(argv=None):
             data = utils.read_data_UCSD(flags.dataset_path, shuffle=False, reshape=False, training=flags.train)
             out = graph.get_operation_by_name('score/Reshape_1').outputs[0]
             input_x_ = graph.get_operation_by_name('score/Reshape').outputs[0]
-            loss = graph.get_operation_by_name('score/mul_2/y').outputs[0] * graph.get_operation_by_name('score/Neg').outputs[0] + graph.get_operation_by_name('score/mul_1').outputs[0]
+            # loss = graph.get_operation_by_name('score/mul_2/y').outputs[0] * graph.get_operation_by_name('score/Neg').outputs[0] + graph.get_operation_by_name('score/mul_1').outputs[0]
             recon = tf.reduce_sum(tf.square(input_x_ - out), (1, 2, 3))
             score = []
             for batch in utils.batch_iter(data, 128, shuffle=False):
                 x = np.asarray(batch)
                 if len(x) < 128:
                     continue
-                psnr_loss, kl_loss, recon_loss, total_loss = sess.run([psnr, kl, recon, loss], feed_dict={
+                psnr_loss, kl_loss, recon_loss = sess.run([psnr, kl, recon], feed_dict={
                     input_x: x, training: True
                 })
                 log = 'psnr:%.5f \t kl:%.5f \t recon:%.5f' % (psnr_loss, kl_loss, np.mean(recon_loss))
                 print(log)
-                score = np.concatenate((score, total_loss), -1)
+                score = np.concatenate((score, recon_loss), -1)
             fpr, tpr, threshold, acc = auroc.auroc(score, flags.label_dir)
             print(acc)
             print(threshold)
