@@ -15,7 +15,6 @@ tf.flags.DEFINE_bool('train', False, 'use train(True) or test(False)')
 flags = tf.flags.FLAGS
 if 'Linux' in platform.system():
     os.environ["CUDA_VISIBLE_DEVICES"] = flags.device
-tf.app.run()
 def main(argv=None):
     graph = tf.Graph()
     f = open('loss.log', 'w')
@@ -67,3 +66,6 @@ def main(argv=None):
             scipy.misc.imsave('./input.jpg', utils.montage(x))
             recon_out = np.squeeze(recon_out, -1)
             scipy.misc.imsave('./generate.jpg', utils.montage(recon_out))
+
+if __name__ == '__main__':
+    tf.app.run()
