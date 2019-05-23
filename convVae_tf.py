@@ -244,6 +244,7 @@ class VAE(object):
         kl_sum = 0
         previous_recon = 0
         ckpt_dir = 'ckpt_lr_%f_alpha_%f/model.ckpt' % (self.learning_rate, self.alpha) if self.mode == 'train' else 'ckpt_lr_%f_alpha_%f_finetune/model.ckpt' % (self.learning_rate, self.alpha)
+        tf.summary.FileWriter(os.path.join(ckpt_dir, 'summary'), sess.graph)
         print('model save to: %s' % ckpt_dir)
         for i in range(flags.epoch):
             with tf.device('/cpu:0'):
