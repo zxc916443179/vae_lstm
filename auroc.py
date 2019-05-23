@@ -4,9 +4,7 @@ from utils import load_label
 import matplotlib.pyplot as plt
 
 def auroc(score, label_path):
-    label_dir = 'test_label'
-
-    labels, cnt = load_label(label_dir, True)
+    labels, cnt = load_label(label_path, True)
     assert len(score) <= cnt, "length of score(%d) is larger than labels(%d)'" % (len(score), cnt)
     labels = labels[:len(score)]
     fpr, tpr, threshold = roc_curve(labels, score)
