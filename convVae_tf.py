@@ -268,7 +268,7 @@ class VAE(object):
                     })
                     print("Evaluation:")
                     print("loss:%.5f, kl_loss:%.5f" % (loss, kl_loss))
-                    if previous_recon < np.abs(fetch[1]):
+                    if previous_recon > np.abs(fetch[1]):
                         saver.save(self.sess, ckpt_dir, global_step=global_step)
                         print('model is saved to %s \t current psnr loss is: %.5f' % (ckpt_dir, fetch[1]))
                         previous_recon = np.abs(fetch[1])
