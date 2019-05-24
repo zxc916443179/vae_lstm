@@ -272,9 +272,9 @@ class VAE(object):
                         saver.save(self.sess, ckpt_dir, global_step=global_step)
                         print('model is saved to %s \t current psnr loss is: %.5f' % (ckpt_dir, fetch[1]))
                         previous_recon = np.abs(fetch[1])
-            self.test(test_data=validate_data, img_size=self.input_h, num_show=128)
+            self.test(test_data=validate_data, img_size=self.input_h, num_show=128, dst=ckpt_dir)
 
-    def test(self, test_data, img_size, num_show):
+    def test(self, test_data, img_size, num_show, dst=None):
         recon = self.sess.run(self.out, feed_dict={
             self.input_x_: test_data, self.training: True
         })
@@ -283,8 +283,8 @@ class VAE(object):
         # inputs = np.squeeze(inputs, -1)
         recon = np.reshape(recon, (num_show, img_size, img_size))
         inputs = np.reshape(inputs, (num_show, img_size, img_size))
-        scipy.misc.imsave('./generate.jpg', utils.montage(recon))
-        scipy.misc.imsave('./inputs.jpg', utils.montage(inputs))
+        scipy.misc.imsave(os.path.join(dst, 'generate.jpg'), utils.montage(recon))
+        scipy.misc.imsave(os.path.join(dst, 'inputs.jpg'), utils.montage(inputs))
 
     def save_model(self):
         '''
