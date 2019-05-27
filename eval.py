@@ -40,16 +40,19 @@ def main(argv=None):
             # recon = tf.reduce_sum(tf.square(input_x_ - out), (1, 2, 3))
             recon = graph.get_operation_by_name('score/Sum').outputs[0]
             score = []
+            out_all = []
             for batch in utils.batch_iter(data, 128, shuffle=False):
                 x = np.asarray(batch)
                 if len(x) < 128:
                     continue
-                psnr_loss, kl_loss, recon_loss = sess.run([psnr, kl, recon], feed_dict={
+                psnr_loss, kl_loss, recon_loss, recon_out = sess.run([psnr, kl, recon, out], feed_dict={
                     input_x: x, training: True
                 })
                 log = 'psnr:%.5f \t kl:%.5f \t recon:%.5f' % (psnr_loss, kl_loss, np.mean(recon_loss))
                 print(log)
                 score = np.concatenate((score, recon_loss), -1)
+                print(out.shape())
+                out_all = np.concatenate((out_all, out))
             fpr, tpr, threshold, acc = auroc.auroc(score, flags.label_dir)
             print(acc)
             print(threshold)
