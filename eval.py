@@ -51,7 +51,7 @@ def main(argv=None):
                 log = 'psnr:%.5f \t kl:%.5f \t recon:%.5f' % (psnr_loss, kl_loss, np.mean(recon_loss))
                 print(log)
                 score = np.concatenate((score, recon_loss), -1)
-                print(recon_out.shape())
+                # print(recon_out.shape())
                 out_all = np.concatenate((out_all, recon_out))
             fpr, tpr, threshold, acc = auroc.auroc(score, flags.label_dir)
             print(acc)
