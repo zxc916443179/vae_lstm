@@ -52,7 +52,7 @@ def main(argv=None):
                 print(log)
                 score = np.concatenate((score, recon_loss), -1)
                 # print(recon_out.shape())
-                out_all = np.concatenate((out_all, recon_out))
+                out_all = np.concatenate((out_all, recon_out), (1, 2))
             fpr, tpr, threshold, acc = auroc.auroc(score, flags.label_dir)
             print(acc)
             print(threshold)
