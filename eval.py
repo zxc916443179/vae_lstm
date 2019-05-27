@@ -34,7 +34,7 @@ def main(argv=None):
             input_x = graph.get_operation_by_name('input_x').outputs[0]
             training = graph.get_operation_by_name('training').outputs[0]
             data = utils.read_data_UCSD(flags.dataset_path, shuffle=False, reshape=False, training=flags.train)
-            # out = graph.get_operation_by_name('score/Reshape_1').outputs[0]
+            out = graph.get_operation_by_name('conv2d_transpose_2/Sigmoid').outputs[0]
             # input_x_ = graph.get_operation_by_name('score/Reshape').outputs[0]
             # loss = graph.get_operation_by_name('score/mul_2/y').outputs[0] * graph.get_operation_by_name('score/Neg').outputs[0] + graph.get_operation_by_name('score/mul_1').outputs[0]
             # recon = tf.reduce_sum(tf.square(input_x_ - out), (1, 2, 3))
