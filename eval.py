@@ -9,7 +9,9 @@ import auroc
 import ptvsd
 
 ptvsd.enable_attach('59.78.194.142', 5678)
+print('wait for attach')
 ptvsd.wait_for_attach()
+print('attach success')
 tf.flags.DEFINE_string("dataset_path", './UCSDped_patch/ped1', "dataset path")
 tf.flags.DEFINE_string("checkpoint_dir", "none", "loading latest checkpoint")
 tf.flags.DEFINE_string('label_dir', './label/label15.p', "dir of label")
